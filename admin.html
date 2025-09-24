@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>교사 다면평가 관리자 페이지</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8fafc;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background-color: white;
+            color: #333;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+
+
+        .filter-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .form-group select, .form-group input {
+            padding: 8px 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group select:focus, .form-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .evaluation-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 0.85rem;
+        }
+
+        .evaluation-table th,
+        .evaluation-table td {
+            padding: 12px 8px;
+            text-align: center;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: middle;
+        }
+
+        .evaluation-table th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .evaluation-table tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .score-badge {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .department-badge {
+            background: #e0e7ff;
+            color: #3730a3;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #6b7280;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .evaluation-table {
+                font-size: 0.75rem;
+            }
+
+            .evaluation-table th,
+            .evaluation-table td {
+                padding: 8px 4px;
+            }
+
+            .container {
+                padding: 10px;
+            }
+
+            .filter-section {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 헤더 -->
+        <div class="header">
+            <div class="flex justify-between items-center mb-4">
+                <h1 class="text-2xl font-bold">교사 다면평가 관리자 시스템</h1>
+                <div class="flex gap-2 items-center">
+                    <div id="connectionStatus" class="px-3 py-1 rounded text-sm font-medium">
+                        🔴 연결 안됨
+                    </div>
+                    <button class="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 text-sm" onclick="showFirebaseSettings()">
+                        ⚙️ Firebase 설정
+                    </button>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button id="refreshBtn" class="btn btn-success" onclick="loadEvaluations()">
+                    🔄 데이터 새로고침
+                </button>
+                <button id="exportBtn" class="btn btn-primary" onclick="exportToExcel()">
+                    📊 Excel 내보내기
+                </button>
+                <button id="deleteAllBtn" class="text-sm px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700" onclick="deleteAllEvaluations()">
+                    🗑️ 전체 삭제
+                </button>
+            </div>
+        </div>
+
+
+
+        <!-- 필터 섹션 -->
+        <div class="card">
+            <h3 class="text-xl font-bold mb-4">📋 필터 및 검색</h3>
+            <div class="filter-section">
+                <div class="form-group">
+                    <label for="filterTeacherType">교사구분별 필터</label>
+                    <select id="filterTeacherType">
+                        <option value="">전체</option>
+                        <option value="정교사">정교사</option>
+                        <option value="기간제교사">기간제교사</option>
+                        <option value="비교과교사">비교과교사</option>
+                        <option value="미설정">미설정</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="filterName">교사명 검색</label>
+                    <input type="text" id="filterName" placeholder="교사명 입력">
+                </div>
+                <div class="form-group">
+                    <label for="sortBy">정렬 기준</label>
+                    <select id="sortBy">
+                        <option value="teacherName">교사명</option>
+                        <option value="totalScore">총점</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="sortOrder">정렬 순서</label>
+                    <select id="sortOrder">
+                        <option value="asc">오름차순</option>
+                        <option value="desc">내림차순</option>
+                    </select>
+                </div>
+                <div class="form-group" style="justify-content: flex-end; margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="applyFilters()">필터 적용</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 평가 데이터 테이블 -->
+        <div class="card">
+            <h3 class="text-xl font-bold mb-4">📊 평가 데이터 목록</h3>
+            <div id="loadingIndicator" class="loading">
+                <div>데이터를 불러오는 중...</div>
+            </div>
+            <div id="evaluationTableContainer" class="hidden">
+                <div style="overflow-x: auto;">
+                    <table class="evaluation-table">
+                        <thead>
+                            <tr>
+                                <th rowspan="2">번호</th>
+                                <th rowspan="2">교사명</th>
+                                <th rowspan="2">교사구분</th>
+                                <th rowspan="2">발령교과</th>
+                                <th rowspan="2">부서</th>
+                                <th rowspan="2">총점</th>
+                                <th colspan="3">학습지도(30)</th>
+                                <th colspan="2">생활지도(30)</th>
+                                <th rowspan="2">전문성개발(10)</th>
+                                <th colspan="4">담당업무(30)</th>
+                                <th rowspan="2">위원회</th>
+                                <th rowspan="2">삭제</th>
+                            </tr>
+                            <tr>
+                                <th class="text-xs">수업시수</th>
+                                <th class="text-xs">다학년지도</th>
+                                <th class="text-xs">수업공개</th>
+                                <th class="text-xs">담임</th>
+                                <th class="text-xs">교내외안전</th>
+                                <th class="text-xs">업무추진</th>
+                                <th class="text-xs">교과업무</th>
+                                <th class="text-xs">업무곤란도</th>
+                                <th class="text-xs">위원회활동</th>
+                            </tr>
+                        </thead>
+                        <tbody id="evaluationTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="noDataMessage" class="hidden text-center py-8 text-gray-500">
+                표시할 데이터가 없습니다.
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase 설정 모달 -->
+    <div id="firebaseModal" class="modal">
+        <div class="modal-content">
+            <h2 class="text-xl font-bold mb-4">🔧 Firebase 설정</h2>
+            <div id="savedSettingsInfo" class="hidden bg-green-100 text-green-800 p-3 rounded mb-4">
+                저장된 설정이 있습니다. 필요시 수정해주세요.
+            </div>
+            <div class="form-group mb-4">
+                <label for="firebaseApiKey">Firebase API Key:</label>
+                <input type="password" id="firebaseApiKey" placeholder="Firebase API Key 입력" class="w-full">
+            </div>
+            <div class="form-group mb-6">
+                <label for="firebaseProjectId">Firebase Project ID:</label>
+                <input type="text" id="firebaseProjectId" placeholder="Project ID 입력" class="w-full">
+            </div>
+            <div class="flex gap-3">
+                <button onclick="saveFirebaseSettings()" class="btn btn-primary flex-1">설정 저장</button>
+                <button onclick="clearFirebaseSettings()" class="btn" style="background: #ef4444; color: white;">설정 삭제</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        let allEvaluations = [];
+        let filteredEvaluations = [];
+
+        // 연결 상태 업데이트 함수
+        function updateConnectionStatus(connected, message = '') {
+            const statusElement = document.getElementById('connectionStatus');
+            if (connected) {
+                statusElement.textContent = '🟢 연결됨';
+                statusElement.className = 'px-3 py-1 rounded text-sm font-medium bg-green-100 text-green-800';
+            } else {
+                statusElement.textContent = message ? `🔴 ${message}` : '🔴 연결 안됨';
+                statusElement.className = 'px-3 py-1 rounded text-sm font-medium bg-red-100 text-red-800';
+            }
+        }
+
+        // Firebase 설정 및 초기화
+        function initializeFirebase() {
+            const apiKey = localStorage.getItem('firebaseApiKey');
+            const projectId = localStorage.getItem('firebaseProjectId');
+
+            if (!apiKey || !projectId) {
+                updateConnectionStatus(false, '설정 필요');
+                showFirebaseSettings();
+                return false;
+            }
+
+            const firebaseConfig = {
+                apiKey: apiKey,
+                authDomain: `${projectId}.firebaseapp.com`,
+                databaseURL: `https://${projectId}-default-rtdb.asia-southeast1.firebasedatabase.app`,
+                projectId: projectId,
+                storageBucket: `${projectId}.firebasestorage.app`,
+                messagingSenderId: "383693605457",
+                appId: "1:383693605457:web:b5c75a08b0fcef08188670"
+            };
+
+            try {
+                firebase.initializeApp(firebaseConfig);
+                window.database = firebase.database();
+                window.evaluationRef = database.ref('evaluations');
+
+                // 연결 테스트
+                database.ref('.info/connected').on('value', (snapshot) => {
+                    if (snapshot.val() === true) {
+                        updateConnectionStatus(true);
+                    } else {
+                        updateConnectionStatus(false, '연결 끊어짐');
+                    }
+                });
+
+                return true;
+            } catch (error) {
+                console.error('Firebase 초기화 오류:', error);
+                updateConnectionStatus(false, '초기화 실패');
+                showFirebaseSettings();
+                return false;
+            }
+        }
+
+        // Firebase 설정 관련 함수들
+        function showFirebaseSettings() {
+            const modal = document.getElementById('firebaseModal');
+            modal.style.display = 'flex';
+
+            const apiKey = localStorage.getItem('firebaseApiKey');
+            const projectId = localStorage.getItem('firebaseProjectId');
+            const savedSettingsInfo = document.getElementById('savedSettingsInfo');
+
+            if (apiKey && projectId) {
+                document.getElementById('firebaseApiKey').value = apiKey;
+                document.getElementById('firebaseProjectId').value = projectId;
+                savedSettingsInfo.classList.remove('hidden');
+            } else {
+                savedSettingsInfo.classList.add('hidden');
+            }
+        }
+
+        function saveFirebaseSettings() {
+            const apiKey = document.getElementById('firebaseApiKey').value.trim();
+            const projectId = document.getElementById('firebaseProjectId').value.trim();
+
+            if (!apiKey || !projectId) {
+                alert('API Key와 Project ID를 모두 입력해주세요.');
+                return;
+            }
+
+            localStorage.setItem('firebaseApiKey', apiKey);
+            localStorage.setItem('firebaseProjectId', projectId);
+
+            try {
+                if (firebase.apps.length > 0) {
+                    firebase.apps.forEach(app => app.delete());
+                }
+
+                const success = initializeFirebase();
+                if (success) {
+                    document.getElementById('firebaseModal').style.display = 'none';
+                    alert('Firebase 설정이 저장되고 연결되었습니다!');
+                    loadEvaluations();
+                } else {
+                    updateConnectionStatus(false, '연결 실패');
+                }
+            } catch (error) {
+                console.error('Firebase 설정 오류:', error);
+                alert('Firebase 설정에 오류가 발생했습니다. API Key와 Project ID를 확인해주세요.');
+            }
+        }
+
+        function clearFirebaseSettings() {
+            if (confirm('저장된 Firebase 설정을 삭제하시겠습니까?')) {
+                localStorage.removeItem('firebaseApiKey');
+                localStorage.removeItem('firebaseProjectId');
+                document.getElementById('firebaseApiKey').value = '';
+                document.getElementById('firebaseProjectId').value = '';
+                document.getElementById('savedSettingsInfo').classList.add('hidden');
+                updateConnectionStatus(false, '설정 삭제됨');
+                alert('저장된 Firebase 설정이 삭제되었습니다.');
+            }
+        }
+
+        // 평가 데이터 로드
+        function loadEvaluations() {
+            if (!window.evaluationRef) {
+                updateConnectionStatus(false, 'Firebase 미연결');
+                alert('Firebase 연결이 필요합니다.');
+                showFirebaseSettings();
+                return;
+            }
+
+            document.getElementById('loadingIndicator').classList.remove('hidden');
+            document.getElementById('evaluationTableContainer').classList.add('hidden');
+            document.getElementById('noDataMessage').classList.add('hidden');
+
+            evaluationRef.once('value')
+                .then((snapshot) => {
+                    allEvaluations = [];
+                    if (snapshot.exists()) {
+                        snapshot.forEach((childSnapshot) => {
+                            const data = childSnapshot.val();
+                            data.id = childSnapshot.key;
+                            allEvaluations.push(data);
+                        });
+                    }
+
+                    filteredEvaluations = [...allEvaluations];
+                    updateStatistics();
+                    displayEvaluations();
+                    document.getElementById('loadingIndicator').classList.add('hidden');
+                })
+                .catch((error) => {
+                    console.error('데이터 로드 오류:', error);
+                    updateConnectionStatus(false, '데이터 로드 실패');
+                    alert('데이터를 불러오는 중 오류가 발생했습니다.');
+                    document.getElementById('loadingIndicator').classList.add('hidden');
+                });
+        }
+
+        // 통계 업데이트
+        function updateStatistics() {
+            // 통계 카드가 제거되어 별도 통계 업데이트 불필요
+            // 필요시 콘솔에 통계 정보 출력
+            console.log(`총 평가 수: ${allEvaluations.length}`);
+        }
+
+        // 평가 데이터 표시
+        function displayEvaluations() {
+            const tbody = document.getElementById('evaluationTableBody');
+            tbody.innerHTML = '';
+
+            if (filteredEvaluations.length === 0) {
+                document.getElementById('evaluationTableContainer').classList.add('hidden');
+                document.getElementById('noDataMessage').classList.remove('hidden');
+                return;
+            }
+
+            document.getElementById('evaluationTableContainer').classList.remove('hidden');
+            document.getElementById('noDataMessage').classList.add('hidden');
+
+            filteredEvaluations.forEach((evaluation, index) => {
+                const row = document.createElement('tr');
+
+                // 각 영역별 점수 추출
+                const learningScore = calculateCategoryScore(evaluation, '학습지도');
+                const lifeScore = calculateCategoryScore(evaluation, '생활지도');
+                const profScore = calculateCategoryScore(evaluation, '전문성개발');
+                const workScore = calculateCategoryScore(evaluation, '담당업무');
+
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td class="font-medium">${evaluation.teacherName || '미입력'}</td>
+                    <td>
+                        <select class="text-xs p-1 border rounded teacher-type-select"
+                                data-evaluation-id="${evaluation.id}"
+                                onchange="updateTeacherType('${evaluation.id}', this.value)">
+                            <option value="정교사" ${(evaluation.teacherType === '정교사') ? 'selected' : ''}>정교사</option>
+                            <option value="기간제교사" ${(evaluation.teacherType === '기간제교사') ? 'selected' : ''}>기간제교사</option>
+                            <option value="비교과교사" ${(evaluation.teacherType === '비교과교사') ? 'selected' : ''}>비교과교사</option>
+                            <option value="미설정" ${(!evaluation.teacherType || evaluation.teacherType === '미설정') ? 'selected' : ''}>미설정</option>
+                        </select>
+                    </td>
+                    <td>${evaluation.teacherSubject || '미입력'}</td>
+                    <td><span class="department-badge">${evaluation.teacherDepartment || '미정'}</span></td>
+                    <td><span class="score-badge">${evaluation.totalScore.toFixed(1)}</span></td>
+
+                    <!-- 학습지도 세부 점수 -->
+                    <td class="text-sm">${(evaluation.learningResult || 0).toFixed(1)}</td>
+                    <td class="text-sm">${(evaluation.multiGradeResult || 0).toFixed(1)}</td>
+                    <td class="text-sm">${(evaluation.classOpenResult || 0).toFixed(1)}</td>
+
+                    <!-- 생활지도 세부 점수 -->
+                    <td class="text-sm">${(evaluation.lifeGuidanceResult || 0).toFixed(1)}</td>
+                    <td class="text-sm">${(evaluation.violencePreventionResult || 0).toFixed(1)}</td>
+
+                    <!-- 전문성개발 -->
+                    <td class="text-sm">${(evaluation.professionalDevResult || 0).toFixed(1)}</td>
+
+                    <!-- 담당업무 세부 점수 -->
+                    <td class="text-sm">${(evaluation.workPerformanceResult || 0).toFixed(1)}</td>
+                    <td class="text-sm">${(evaluation.subjectWorkResult || 0).toFixed(1)}</td>
+                    <td class="text-sm">${(evaluation.workDifficultyResult || 0).toFixed(1)}</td>
+                    <td class="text-sm">${(evaluation.committeeWorkResult || 0).toFixed(1)}</td>
+
+                    <td class="text-xs leading-tight" style="font-size: 10px; line-height: 1.2;">
+                        ${getCommitteeList(evaluation)}
+                    </td>
+                    <td>
+                        <button class="text-xs px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700" onclick="deleteEvaluation('${evaluation.id}', '${evaluation.teacherName || '미입력'}')">
+                            🗑️ 삭제
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // 위원회 목록 가져오기 함수
+        function getCommitteeList(evaluation) {
+            // evaluation 데이터에서 위원회 정보를 추출
+            const committees = [];
+
+            // 위원회 정보가 저장되어 있다면 추출
+            if (evaluation.committee1 && evaluation.committee1.trim()) {
+                committees.push(evaluation.committee1.trim());
+            }
+            if (evaluation.committee2 && evaluation.committee2.trim()) {
+                committees.push(evaluation.committee2.trim());
+            }
+            if (evaluation.committee3 && evaluation.committee3.trim()) {
+                committees.push(evaluation.committee3.trim());
+            }
+
+            // 위원회가 없으면 빈 문자열 반환
+            if (committees.length === 0) {
+                return '-';
+            }
+
+            // 각 위원회를 별도 줄로 표시 (최대 3줄)
+            return committees.map(committee => `<div style="margin-bottom: 1px;">${committee}</div>`).join('');
+        }
+
+        // 카테고리별 점수 계산
+        function calculateCategoryScore(evaluation, category) {
+            switch(category) {
+                case '학습지도':
+                    return evaluation.learningTotalScore || 0;
+                case '생활지도':
+                    return evaluation.lifeGuidanceTotalScore || 0;
+                case '전문성개발':
+                    return evaluation.professionalDevTotalScore || 0;
+                case '담당업무':
+                    return evaluation.assignedWorkTotalScore || 0;
+                default:
+                    return 0;
+            }
+        }
+
+
+        // 필터 적용
+        function applyFilters() {
+            const teacherTypeFilter = document.getElementById('filterTeacherType').value;
+            const nameFilter = document.getElementById('filterName').value.toLowerCase();
+            const sortBy = document.getElementById('sortBy').value;
+            const sortOrder = document.getElementById('sortOrder').value;
+
+            filteredEvaluations = allEvaluations.filter(evaluation => {
+                const teacherTypeMatch = !teacherTypeFilter ||
+                    (evaluation.teacherType === teacherTypeFilter) ||
+                    (teacherTypeFilter === '미설정' && (!evaluation.teacherType || evaluation.teacherType === '미설정'));
+                const nameMatch = !nameFilter ||
+                    (evaluation.teacherName && evaluation.teacherName.toLowerCase().includes(nameFilter));
+
+                return teacherTypeMatch && nameMatch;
+            });
+
+            // 정렬
+            filteredEvaluations.sort((a, b) => {
+                let aValue = a[sortBy];
+                let bValue = b[sortBy];
+
+                // 교사명의 경우 문자열 정렬, 총점의 경우 숫자 정렬
+                if (sortBy === 'teacherName') {
+                    aValue = (aValue || '').toLowerCase();
+                    bValue = (bValue || '').toLowerCase();
+                } else if (sortBy === 'totalScore') {
+                    aValue = parseFloat(aValue || 0);
+                    bValue = parseFloat(bValue || 0);
+                }
+
+                if (sortOrder === 'asc') {
+                    return aValue > bValue ? 1 : -1;
+                } else {
+                    return aValue < bValue ? 1 : -1;
+                }
+            });
+
+            displayEvaluations();
+        }
+
+
+        // 교사 구분 업데이트
+        function updateTeacherType(evaluationId, teacherType) {
+            if (!window.evaluationRef) {
+                alert('Firebase 연결이 필요합니다.');
+                return;
+            }
+
+            // Firebase에서 교사 구분 업데이트
+            evaluationRef.child(evaluationId).update({
+                teacherType: teacherType,
+                updatedAt: new Date().toISOString()
+            })
+            .then(() => {
+                console.log(`교사 구분이 "${teacherType}"으로 업데이트되었습니다.`);
+
+                // 로컬 데이터도 업데이트
+                const evaluation = allEvaluations.find(eval => eval.id === evaluationId);
+                if (evaluation) {
+                    evaluation.teacherType = teacherType;
+                }
+
+                // 필터가 적용된 상태라면 다시 적용
+                applyFilters();
+            })
+            .catch((error) => {
+                console.error('교사 구분 업데이트 오류:', error);
+                alert('교사 구분 업데이트 중 오류가 발생했습니다.');
+
+                // 원래 값으로 되돌리기
+                const selectElement = document.querySelector(`[data-evaluation-id="${evaluationId}"]`);
+                if (selectElement) {
+                    const originalValue = allEvaluations.find(eval => eval.id === evaluationId)?.teacherType || '미설정';
+                    selectElement.value = originalValue;
+                }
+            });
+        }
+
+        // 평가 데이터 삭제
+        function deleteEvaluation(evaluationId, teacherName) {
+            if (!window.evaluationRef) {
+                alert('Firebase 연결이 필요합니다.');
+                return;
+            }
+
+            // 확인 다이얼로그
+            if (!confirm(`정말로 "${teacherName}" 교사의 평가 데이터를 삭제하시겠습니까?\n\n⚠️ 삭제된 데이터는 복구할 수 없습니다.`)) {
+                return;
+            }
+
+            // 추가 확인 (실수 방지)
+            const confirmText = prompt(`삭제를 확인하려면 교사명을 정확히 입력해주세요:\n\n삭제할 교사명: ${teacherName}`);
+            if (confirmText !== teacherName) {
+                alert('교사명이 일치하지 않습니다. 삭제가 취소되었습니다.');
+                return;
+            }
+
+            // Firebase에서 삭제
+            evaluationRef.child(evaluationId).remove()
+                .then(() => {
+                    alert(`"${teacherName}" 교사의 평가 데이터가 삭제되었습니다.`);
+                    // 데이터 새로고침
+                    loadEvaluations();
+                })
+                .catch((error) => {
+                    console.error('삭제 오류:', error);
+                    alert('삭제 중 오류가 발생했습니다. 다시 시도해주세요.');
+                });
+        }
+
+        // 전체 평가 데이터 삭제
+        function deleteAllEvaluations() {
+            if (!window.evaluationRef) {
+                alert('Firebase 연결이 필요합니다.');
+                return;
+            }
+
+            if (allEvaluations.length === 0) {
+                alert('삭제할 데이터가 없습니다.');
+                return;
+            }
+
+            // 첫 번째 확인
+            if (!confirm(`⚠️ 경고: 모든 평가 데이터를 삭제하시겠습니까?\n\n총 ${allEvaluations.length}개의 평가 데이터가 삭제됩니다.\n삭제된 데이터는 복구할 수 없습니다.`)) {
+                return;
+            }
+
+            // 두 번째 확인 (매우 위험한 작업이므로)
+            const confirmText = prompt('정말로 모든 데이터를 삭제하려면 "모든데이터삭제"를 정확히 입력해주세요:');
+            if (confirmText !== '모든데이터삭제') {
+                alert('입력이 정확하지 않습니다. 삭제가 취소되었습니다.');
+                return;
+            }
+
+            // Firebase에서 전체 삭제
+            evaluationRef.remove()
+                .then(() => {
+                    alert(`모든 평가 데이터 (${allEvaluations.length}개)가 삭제되었습니다.`);
+                    // 데이터 새로고침
+                    loadEvaluations();
+                })
+                .catch((error) => {
+                    console.error('전체 삭제 오류:', error);
+                    alert('삭제 중 오류가 발생했습니다. 다시 시도해주세요.');
+                });
+        }
+
+        // Excel 내보내기
+        function exportToExcel() {
+            if (filteredEvaluations.length === 0) {
+                alert('내보낼 데이터가 없습니다.');
+                return;
+            }
+
+            const wb = XLSX.utils.book_new();
+            const wsData = [
+                ['번호', '교사명', '교사구분', '발령교과', '부서', '총점',
+                 '수업시수', '다학년지도', '수업공개', '담임', '교내외안전',
+                 '전문성개발', '업무추진', '교과업무', '업무곤란도', '위원회활동']
+            ];
+
+            filteredEvaluations.forEach((evaluation, index) => {
+                wsData.push([
+                    index + 1,
+                    evaluation.teacherName || '미입력',
+                    evaluation.teacherType || '미설정',
+                    evaluation.teacherSubject || '미입력',
+                    evaluation.teacherDepartment || '미정',
+                    evaluation.totalScore.toFixed(1),
+                    (evaluation.learningResult || 0).toFixed(1),
+                    (evaluation.multiGradeResult || 0).toFixed(1),
+                    (evaluation.classOpenResult || 0).toFixed(1),
+                    (evaluation.lifeGuidanceResult || 0).toFixed(1),
+                    (evaluation.violencePreventionResult || 0).toFixed(1),
+                    (evaluation.professionalDevResult || 0).toFixed(1),
+                    (evaluation.workPerformanceResult || 0).toFixed(1),
+                    (evaluation.subjectWorkResult || 0).toFixed(1),
+                    (evaluation.workDifficultyResult || 0).toFixed(1),
+                    (evaluation.committeeWorkResult || 0).toFixed(1)
+                ]);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            XLSX.utils.book_append_sheet(wb, ws, '평가결과');
+
+            const fileName = `교사평가결과_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        }
+
+        // 이벤트 리스너
+        document.addEventListener('DOMContentLoaded', () => {
+            // Firebase 초기화 및 데이터 로드
+            if (initializeFirebase()) {
+                loadEvaluations();
+            }
+
+            // 필터 이벤트 리스너
+            ['filterTeacherType', 'filterName', 'sortBy', 'sortOrder'].forEach(id => {
+                document.getElementById(id).addEventListener('change', applyFilters);
+                document.getElementById(id).addEventListener('keyup', applyFilters);
+            });
+
+        });
+    </script>
+</body>
+</html>
