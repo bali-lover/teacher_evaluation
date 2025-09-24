@@ -28,6 +28,33 @@
             padding: 20px;
         }
 
+        .password-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .password-modal {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
         .header {
             background-color: white;
             color: #333;
@@ -215,6 +242,119 @@
     </style>
 </head>
 <body>
+
+    <!-- 데이터 목록 열기 비밀번호 모달 -->
+    <div id="dataPasswordOverlay" class="password-overlay hidden">
+        <div class="password-modal">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">데이터 목록 열기</h2>
+            <p class="text-gray-600 mb-6">비밀번호를 입력하세요</p>
+            <div class="mb-4">
+                <input
+                    type="password"
+                    id="dataPasswordInput"
+                    placeholder="비밀번호"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg"
+                    onkeypress="if(event.key==='Enter') checkDataPassword()"
+                >
+            </div>
+            <div class="flex gap-3">
+                <button
+                    onclick="checkDataPassword()"
+                    class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                    열기
+                </button>
+                <button
+                    onclick="hideDataPasswordModal()"
+                    class="flex-1 bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors font-semibold">
+                    취소
+                </button>
+            </div>
+            <div id="dataPasswordError" class="text-red-500 text-sm mt-3 hidden">비밀번호가 틀렸습니다.</div>
+        </div>
+    </div>
+
+    <!-- 데이터 목록 비밀번호 설정 모달 -->
+    <div id="dataPasswordSettingsOverlay" class="password-overlay hidden">
+        <div class="password-modal">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">데이터 목록 비밀번호 설정</h2>
+            <p class="text-gray-600 mb-4">데이터 목록 접근용 비밀번호를 설정하세요</p>
+            <div class="mb-4">
+                <input
+                    type="password"
+                    id="currentDataPasswordInput"
+                    placeholder="현재 비밀번호"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg mb-3"
+                >
+                <input
+                    type="password"
+                    id="newDataPasswordInput"
+                    placeholder="새 비밀번호"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg mb-3"
+                >
+                <input
+                    type="password"
+                    id="confirmDataPasswordInput"
+                    placeholder="새 비밀번호 확인"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg"
+                    onkeypress="if(event.key==='Enter') saveNewDataPassword()"
+                >
+            </div>
+            <div class="flex gap-3">
+                <button
+                    onclick="saveNewDataPassword()"
+                    class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                    저장
+                </button>
+                <button
+                    onclick="hideDataPasswordSettings()"
+                    class="flex-1 bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors font-semibold">
+                    취소
+                </button>
+            </div>
+            <div id="dataPasswordSettingsError" class="text-red-500 text-sm mt-3 hidden"></div>
+            <div id="dataPasswordSettingsSuccess" class="text-green-500 text-sm mt-3 hidden">비밀번호가 성공적으로 변경되었습니다.</div>
+        </div>
+    </div>
+
+    <!-- 비밀번호 설정 모달 -->
+    <div id="passwordSettingsOverlay" class="password-overlay hidden">
+        <div class="password-modal">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">관리자 비밀번호 설정</h2>
+            <p class="text-gray-600 mb-4">관리자 비밀번호를 설정하세요</p>
+            <div class="mb-4">
+                <input
+                    type="password"
+                    id="newPasswordInput"
+                    placeholder="새 비밀번호"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg mb-3"
+                >
+                <input
+                    type="password"
+                    id="confirmPasswordInput"
+                    placeholder="비밀번호 확인"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg"
+                    onkeypress="if(event.key==='Enter') saveNewPassword()"
+                >
+            </div>
+            <div class="flex gap-3">
+                <button
+                    onclick="saveNewPassword()"
+                    class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                    저장
+                </button>
+                <button
+                    onclick="hidePasswordSettings()"
+                    class="flex-1 bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors font-semibold">
+                    취소
+                </button>
+            </div>
+            <div id="passwordSettingsError" class="text-red-500 text-sm mt-3 hidden"></div>
+            <div id="passwordSettingsSuccess" class="text-green-500 text-sm mt-3 hidden">비밀번호가 성공적으로 변경되었습니다.</div>
+        </div>
+    </div>
+
+    <!-- 메인 컨텐츠 -->
+    <div id="mainContent">
     <div class="container">
         <!-- 헤더 -->
         <div class="header">
@@ -284,8 +424,23 @@
 
         <!-- 평가 데이터 테이블 -->
         <div class="card">
-            <h3 class="text-xl font-bold mb-4">📊 평가 데이터 목록</h3>
-            <div id="loadingIndicator" class="loading">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">📊 평가 데이터 목록</h3>
+                <div class="flex gap-2">
+                    <button id="openDataBtn" class="btn btn-primary" onclick="openDataList()">
+                        🔓 열기
+                    </button>
+                    <button class="btn btn-success" onclick="showDataPasswordSettings()">
+                        🔒 비밀번호 설정
+                    </button>
+                </div>
+            </div>
+            <!-- 데이터 잠금 상태 표시 -->
+            <div id="dataLockedIndicator" class="text-center py-8">
+                <div class="text-gray-500 mb-4">🔒 평가 데이터가 잠겨있습니다</div>
+                <div class="text-sm text-gray-400">상단의 "열기" 버튼을 클릭하여 비밀번호를 입력하세요</div>
+            </div>
+            <div id="loadingIndicator" class="loading hidden">
                 <div>데이터를 불러오는 중...</div>
             </div>
             <div id="evaluationTableContainer" class="hidden">
@@ -822,18 +977,262 @@
 
         // 이벤트 리스너
         document.addEventListener('DOMContentLoaded', () => {
-            // Firebase 초기화 및 데이터 로드
-            if (initializeFirebase()) {
-                loadEvaluations();
-            }
+            // Firebase 초기화 (데이터는 비밀번호 인증 후 로드)
+            initializeFirebase();
 
             // 필터 이벤트 리스너
             ['filterTeacherType', 'filterName', 'sortBy', 'sortOrder'].forEach(id => {
-                document.getElementById(id).addEventListener('change', applyFilters);
-                document.getElementById(id).addEventListener('keyup', applyFilters);
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('change', applyFilters);
+                    element.addEventListener('keyup', applyFilters);
+                }
             });
 
         });
+
+        // 데이터 목록 열기 함수
+        function openDataList() {
+            document.getElementById('dataPasswordOverlay').classList.remove('hidden');
+            document.getElementById('dataPasswordInput').focus();
+        }
+
+        // 데이터 목록 비밀번호 체크
+        async function checkDataPassword() {
+            const password = document.getElementById('dataPasswordInput').value;
+
+            // 기본 비밀번호 (data2024!)
+            const defaultPasswordHash = await hashPassword('data2024!');
+            let correctPasswordHash = defaultPasswordHash;
+
+            // Firebase에서 저장된 데이터 비밀번호 가져오기
+            try {
+                const snapshot = await firebase.database().ref('admin/dataPasswordHash').once('value');
+                const savedPasswordHash = snapshot.val();
+                if (savedPasswordHash) {
+                    correctPasswordHash = savedPasswordHash;
+                }
+            } catch (error) {
+                console.log('저장된 데이터 비밀번호가 없어 기본 비밀번호를 사용합니다.');
+            }
+
+            const inputPasswordHash = await hashPassword(password);
+
+            if (inputPasswordHash === correctPasswordHash) {
+                document.getElementById('dataPasswordOverlay').classList.add('hidden');
+                document.getElementById('dataPasswordInput').value = '';
+
+                // 데이터 잠금 해제 및 로드
+                document.getElementById('dataLockedIndicator').classList.add('hidden');
+                document.getElementById('loadingIndicator').classList.remove('hidden');
+                document.getElementById('openDataBtn').innerHTML = '🔒 잠그기';
+                document.getElementById('openDataBtn').onclick = lockDataList;
+
+                loadEvaluations();
+            } else {
+                document.getElementById('dataPasswordError').classList.remove('hidden');
+                document.getElementById('dataPasswordInput').value = '';
+                setTimeout(() => {
+                    document.getElementById('dataPasswordError').classList.add('hidden');
+                }, 3000);
+            }
+        }
+
+        // 데이터 목록 숨기기
+        function hideDataPasswordModal() {
+            document.getElementById('dataPasswordOverlay').classList.add('hidden');
+            document.getElementById('dataPasswordInput').value = '';
+            document.getElementById('dataPasswordError').classList.add('hidden');
+        }
+
+        // 데이터 목록 잠그기
+        function lockDataList() {
+            document.getElementById('evaluationTableContainer').classList.add('hidden');
+            document.getElementById('loadingIndicator').classList.add('hidden');
+            document.getElementById('dataLockedIndicator').classList.remove('hidden');
+            document.getElementById('openDataBtn').innerHTML = '🔓 열기';
+            document.getElementById('openDataBtn').onclick = openDataList;
+        }
+
+        // 데이터 목록 비밀번호 설정 모달 표시
+        function showDataPasswordSettings() {
+            document.getElementById('dataPasswordSettingsOverlay').classList.remove('hidden');
+            document.getElementById('newDataPasswordInput').focus();
+        }
+
+        // 데이터 목록 비밀번호 설정 모달 숨김
+        function hideDataPasswordSettings() {
+            document.getElementById('dataPasswordSettingsOverlay').classList.add('hidden');
+            document.getElementById('currentDataPasswordInput').value = '';
+            document.getElementById('newDataPasswordInput').value = '';
+            document.getElementById('confirmDataPasswordInput').value = '';
+            document.getElementById('dataPasswordSettingsError').classList.add('hidden');
+            document.getElementById('dataPasswordSettingsSuccess').classList.add('hidden');
+        }
+
+        // 새 데이터 목록 비밀번호 저장
+        async function saveNewDataPassword() {
+            const currentPassword = document.getElementById('currentDataPasswordInput').value;
+            const newPassword = document.getElementById('newDataPasswordInput').value;
+            const confirmPassword = document.getElementById('confirmDataPasswordInput').value;
+            const errorDiv = document.getElementById('dataPasswordSettingsError');
+            const successDiv = document.getElementById('dataPasswordSettingsSuccess');
+
+            errorDiv.classList.add('hidden');
+            successDiv.classList.add('hidden');
+
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                errorDiv.textContent = '모든 필드를 입력해주세요.';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            // 현재 비밀번호 확인
+            try {
+                // 기본 비밀번호 (data2024!)
+                const defaultPasswordHash = await hashPassword('data2024!');
+                let correctPasswordHash = defaultPasswordHash;
+
+                // Firebase에서 저장된 비밀번호 가져오기
+                try {
+                    const snapshot = await firebase.database().ref('admin/dataPasswordHash').once('value');
+                    const savedPasswordHash = snapshot.val();
+                    if (savedPasswordHash) {
+                        correctPasswordHash = savedPasswordHash;
+                    }
+                } catch (error) {
+                    console.log('저장된 비밀번호가 없어 기본 비밀번호를 사용합니다.');
+                }
+
+                const currentPasswordHash = await hashPassword(currentPassword);
+
+                if (currentPasswordHash !== correctPasswordHash) {
+                    errorDiv.textContent = '현재 비밀번호가 틀렸습니다.';
+                    errorDiv.classList.remove('hidden');
+                    return;
+                }
+
+                if (newPassword !== confirmPassword) {
+                    errorDiv.textContent = '새 비밀번호가 일치하지 않습니다.';
+                    errorDiv.classList.remove('hidden');
+                    return;
+                }
+
+                if (newPassword.length < 4) {
+                    errorDiv.textContent = '새 비밀번호는 최소 4자 이상이어야 합니다.';
+                    errorDiv.classList.remove('hidden');
+                    return;
+                }
+
+                // 새 비밀번호 저장 (Firebase)
+                const newPasswordHash = await hashPassword(newPassword);
+                await firebase.database().ref('admin/dataPasswordHash').set(newPasswordHash);
+
+                successDiv.textContent = '비밀번호가 성공적으로 변경되었습니다. (Firebase에 저장됨)';
+                successDiv.classList.remove('hidden');
+
+                document.getElementById('currentDataPasswordInput').value = '';
+                document.getElementById('newDataPasswordInput').value = '';
+                document.getElementById('confirmDataPasswordInput').value = '';
+
+                setTimeout(() => {
+                    hideDataPasswordSettings();
+                }, 2000);
+
+            } catch (error) {
+                console.error('데이터 비밀번호 저장 실패:', error);
+                errorDiv.textContent = '비밀번호 저장에 실패했습니다. 다시 시도해주세요.';
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        // 비밀번호 해시 함수 (간단한 해시)
+        async function hashPassword(password) {
+            const msgUint8 = new TextEncoder().encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex;
+        }
+
+
+        // 비밀번호 설정 모달 표시
+        function showPasswordSettings() {
+            document.getElementById('passwordSettingsOverlay').classList.remove('hidden');
+            document.getElementById('newPasswordInput').focus();
+        }
+
+        // 비밀번호 설정 모달 숨김
+        function hidePasswordSettings() {
+            document.getElementById('passwordSettingsOverlay').classList.add('hidden');
+            document.getElementById('newPasswordInput').value = '';
+            document.getElementById('confirmPasswordInput').value = '';
+            document.getElementById('passwordSettingsError').classList.add('hidden');
+            document.getElementById('passwordSettingsSuccess').classList.add('hidden');
+        }
+
+        // 새 비밀번호 저장
+        async function saveNewPassword() {
+            const newPassword = document.getElementById('newPasswordInput').value;
+            const confirmPassword = document.getElementById('confirmPasswordInput').value;
+            const errorDiv = document.getElementById('passwordSettingsError');
+            const successDiv = document.getElementById('passwordSettingsSuccess');
+
+            // 오류 및 성공 메시지 숨김
+            errorDiv.classList.add('hidden');
+            successDiv.classList.add('hidden');
+
+            // 입력 검증
+            if (!newPassword || !confirmPassword) {
+                errorDiv.textContent = '모든 필드를 입력해주세요.';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                errorDiv.textContent = '비밀번호가 일치하지 않습니다.';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                errorDiv.textContent = '비밀번호는 최소 6자 이상이어야 합니다.';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                // 새 비밀번호 해시 생성
+                const newPasswordHash = await hashPassword(newPassword);
+
+                // Firebase에 저장
+                await firebase.database().ref('admin/passwordHash').set(newPasswordHash);
+
+                successDiv.classList.remove('hidden');
+                document.getElementById('newPasswordInput').value = '';
+                document.getElementById('confirmPasswordInput').value = '';
+
+                // 3초 후 모달 닫기
+                setTimeout(() => {
+                    hidePasswordSettings();
+                }, 2000);
+
+            } catch (error) {
+                console.error('비밀번호 저장 실패:', error);
+                errorDiv.textContent = '비밀번호 저장에 실패했습니다. 다시 시도해주세요.';
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        // 비밀번호 변경을 위한 헬퍼 함수 (개발자 도구에서 사용)
+        async function generatePasswordHash(newPassword) {
+            const hash = await hashPassword(newPassword);
+            console.log('새 비밀번호의 해시:', hash);
+            console.log('이 해시를 correctPasswordHash 변수에 복사하세요.');
+            return hash;
+        }
+
     </script>
+    </div> <!-- mainContent 닫기 -->
 </body>
 </html>
