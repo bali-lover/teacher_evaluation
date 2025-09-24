@@ -1,0 +1,2182 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2025학년도 다면평가(정량평가표)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8fafc;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            color: #333;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .evaluation-form {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .evaluation-item {
+            margin-bottom: 25px;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #f9fafb;
+        }
+
+        .evaluation-item h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 15px;
+        }
+
+        .score-options {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .score-option {
+            text-align: center;
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .score-option:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .score-option.selected {
+            border-color: #3b82f6;
+            background: #3b82f6;
+            color: white;
+        }
+
+        .score-option input[type="radio"] {
+            display: none;
+        }
+
+        .score-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .score-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+        .total-score {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .total-score h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .total-score .score {
+            font-size: 3rem;
+            font-weight: 700;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .evaluator-info {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .progress-bar {
+            background: #e5e7eb;
+            height: 8px;
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* 프린트 스타일 */
+        @media print {
+            body {
+                margin: 0;
+                padding: 10px;
+                font-size: 8px !important;
+            }
+
+            .container {
+                max-width: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .header {
+                margin-bottom: 10px !important;
+            }
+
+            .header h1 {
+                font-size: 14px !important;
+                margin: 5px 0 !important;
+            }
+
+            .header .grid {
+                font-size: 8px !important;
+                gap: 5px !important;
+                margin-top: 5px !important;
+            }
+
+            .evaluation-form table {
+                font-size: 6px !important;
+            }
+
+            .evaluation-form th,
+            .evaluation-form td {
+                padding: 2px !important;
+                line-height: 1.2 !important;
+            }
+
+            .text-xs {
+                font-size: 5px !important;
+            }
+
+            /* 1페이지에 맞추기 위한 스케일 조정 */
+            .evaluation-form {
+                transform: scale(0.7);
+                transform-origin: top left;
+                width: 142.85%;
+            }
+
+            /* 프린트 버튼 숨기기 */
+            .print-button {
+                display: none !important;
+            }
+        }
+
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="flex justify-between items-center mb-4">
+                <h1>2025학년도 다면평가(정량평가표)</h1>
+                <div class="flex gap-2 items-center">
+                    <div id="connectionStatus" class="px-3 py-1 rounded text-sm font-medium">
+                        🔴 연결 안됨
+                    </div>
+                    <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm" onclick="showFirebaseSettings()">
+                        ⚙️ Firebase 설정
+                    </button>
+                    <button class="print-button bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" onclick="window.print()">
+                        📄 PDF 저장
+                    </button>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-8 mt-4">
+                <div class="flex items-center">
+                    <label for="teacherSubject" class="text-sm font-medium text-gray-700 mr-2">발령교과 :</label>
+                    <input type="text" id="teacherSubject" class="flex-1 p-2 border border-gray-300 rounded text-center">
+                </div>
+                <div class="flex items-center">
+                    <label for="teacherDepartment" class="text-sm font-medium text-gray-700 mr-2">부서 :</label>
+                    <select id="teacherDepartment" class="flex-1 p-2 border border-gray-300 rounded text-center">
+                        <option value="">부서 선택</option>
+                        <option value="교무기획부">교무기획부</option>
+                        <option value="미래교육연구부">미래교육연구부</option>
+                        <option value="생활안전인권부">생활안전인권부</option>
+                        <option value="진로상담부">진로상담부</option>
+                        <option value="학생자치부">학생자치부</option>
+                        <option value="과학정보부">과학정보부</option>
+                        <option value="인문복지부">인문복지부</option>
+                        <option value="교육과정부">교육과정부</option>
+                        <option value="문화예술체육부">문화예술체육부</option>
+                        <option value="1학년부">1학년부</option>
+                        <option value="2학년부">2학년부</option>
+                        <option value="3학년부">3학년부</option>
+                    </select>
+                </div>
+                <div class="flex items-center">
+                    <label for="teacherName" class="text-sm font-medium text-gray-700 mr-2">성명 :</label>
+                    <input type="text" id="teacherName" class="flex-1 p-2 border border-gray-300 rounded text-center">
+                </div>
+            </div>
+        </div>
+
+        <div class="evaluation-form">
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse border border-gray-400 text-sm">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="border border-gray-400 p-2 text-center font-bold" rowspan="2">평가요소</th>
+                            <th class="border border-gray-400 p-2 text-center font-bold" rowspan="2">평가기준</th>
+                            <th class="border border-gray-400 p-2 text-center font-bold" colspan="4">점수</th>
+                            <th class="border border-gray-400 p-2 text-center font-bold" rowspan="2">평가내용 세부설명</th>
+                            <th class="border border-gray-400 p-1 text-center font-bold text-xs" colspan="2">해당영역점수</th>
+                        </tr>
+                        <tr class="bg-gray-50">
+                            <th class="border border-gray-400 p-1 text-center font-bold text-xs" style="width: 7%">시수</th>
+                            <th class="border border-gray-400 p-1 text-center font-bold text-xs" style="width: 7%">점수</th>
+                            <th class="border border-gray-400 p-1 text-center font-bold text-xs" style="width: 7%">시수</th>
+                            <th class="border border-gray-400 p-1 text-center font-bold text-xs" style="width: 7%">점수</th>
+                            <th class="border border-gray-400 p-1 text-center font-bold text-xs">기준별</th>
+                            <th class="border border-gray-400 p-1 text-center font-bold text-xs">요소별</th>
+                        </tr>
+                    </thead>
+                    <tbody id="evaluationTableBody">
+                        <tr>
+                            <td class="border border-gray-400 p-2 text-center font-medium bg-blue-50" rowspan="3">①<br>학습지도<br>(30점)</td>
+                            <td class="border border-gray-400 p-2 text-center font-medium bg-blue-50">수업시수</td>
+                            <td class="border border-gray-400 p-2 text-left text-xs align-middle" colspan="1">
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <input type="checkbox" class="mr-2" data-group="1" data-hours="24">24
+                                </div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <input type="checkbox" class="mr-2" data-group="1" data-hours="23">23
+                                </div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <input type="checkbox" class="mr-2" data-group="1" data-hours="22">22
+                                </div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <input type="checkbox" class="mr-2" data-group="1" data-hours="21">21
+                                </div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <input type="checkbox" class="mr-2" data-group="1" data-hours="20">20
+                                </div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <input type="checkbox" class="mr-2" data-group="1" data-hours="19">19
+                                </div>
+                                <div>
+                                    <input type="checkbox" class="mr-2" data-group="1" data-hours="18">18
+                                </div>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-center text-xs align-middle">
+                                <div class="border-b border-gray-300 pb-1 mb-1">20</div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">19.5</div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">19</div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">18.5</div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">18</div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">17.5</div>
+                                <div>17</div>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-left text-xs align-middle">
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <input type="checkbox" class="mr-2" data-group="1" data-hours="17">17
+                                </div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <input type="checkbox" class="mr-2" data-group="1" data-hours="16">16
+                                </div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <input type="checkbox" class="mr-2" data-group="1" data-hours="15">15
+                                </div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <input type="checkbox" class="mr-2" data-group="1" data-hours="14">14
+                                </div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <input type="checkbox" class="mr-2" data-group="1" data-hours="13">13
+                                </div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <input type="checkbox" class="mr-2" data-group="1" data-hours="12">12
+                                </div>
+                                <div>
+                                    <input type="checkbox" class="mr-2" data-group="1" data-hours="11">11
+                                </div>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-center text-xs align-middle">
+                                <div class="border-b border-gray-300 pb-1 mb-1">16.5</div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">16</div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">15.5</div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">15</div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">14.5</div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">14</div>
+                                <div>13.5</div>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-left text-xs align-middle">
+                                <strong>* 학기초 작성된 "교과별 시수배당표" 상의 시수</strong><br>
+                                - 수업시수 = 교과+스포츠+동아리+순회+자유학기시수+창체자율+기획회의<br>
+                                <strong>* 1,2학기 시수가 다를 경우 평균시수의 중간 점수 반영</strong><br>
+                                <strong>* 강사협력수업(자유학기, 스포츠 등)은 0.5시수 인정</strong><br>
+                                <strong>* 강사단독수업 인정하지않음</strong><br>
+                                <strong>* 순회교사 + 2시수 반영</strong><br>
+                                <strong>* 교무부장(평균시수) + 1시수 반영</strong><br>
+                                <strong>* 진로전담교사 담당시수가 평균시수 이하인 경우 교과교사 평균시수 인정</strong><br>
+                                <strong>* 학교폭력 담당교사는 보조강사 시수 포함 인정</strong><br>
+                                <strong>* 6개월 미만 근무자 – 한 학기 적용</strong><br>
+                                <strong>* 6개월 초과 근무자(육아휴직제외):</strong><br>
+                                <strong>&nbsp;&nbsp;적용점수-미근무(15일이상)월수*0.2</strong>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-center font-bold">
+                                <div id="learningResult"
+                                     onclick="openScoreModal('learning')"
+                                     style="cursor: pointer; min-height: 20px;"
+                                     title="클릭하여 미근무월수 감점 적용">오류</div>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-center font-bold" rowspan="3">
+                                <div id="learningTotalResult">오류</div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="border border-gray-400 p-2 text-center font-medium bg-blue-50">다학년지도</td>
+                            <td class="border border-gray-400 p-2 text-left" colspan="3">
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <input type="checkbox" class="mr-2" data-group="2" data-type="both">두학기 해당
+                                </div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <input type="checkbox" class="mr-2" data-group="2" data-type="single">한학기 해당
+                                </div>
+                                <div>
+                                    <input type="checkbox" class="mr-2" data-group="2" data-type="none">미해당
+                                </div>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-center" colspan="1">
+                                <div class="border-b border-gray-300 pb-1 mb-1">5</div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">4.5</div>
+                                <div>4</div>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-left text-xs align-middle">
+                                <strong>* 동아리, 스포츠, 자유학기는 다학년에 포함시키지 않음</strong><br>
+                                <strong>* 순회지도 포함</strong><br>
+                                <strong>* 한 학기만 해당한 경우 4.5점 부여</strong><br>
+                                <strong>* 학년 수업을 A, B로 나누는 교과는 제외함</strong>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-center font-bold">
+                                <div id="multiGradeResult">오류</div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="border border-gray-400 p-2 text-center font-medium bg-blue-50">수업공개</td>
+                            <td class="border border-gray-400 p-2 text-left" colspan="3">
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <input type="checkbox" class="mr-2" data-group="3" data-type="school">학교대표 공개수업
+                                </div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <input type="checkbox" class="mr-2" data-group="3" data-type="internal">교내대표 공개수업
+                                </div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <input type="checkbox" class="mr-2" data-group="3" data-type="parent">학부모 공개수업
+                                </div>
+                                <div>
+                                    <input type="checkbox" class="mr-2" data-group="3" data-type="none">미해당
+                                </div>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-center" colspan="1">
+                                <div class="border-b border-gray-300 pb-1 mb-1">5</div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">4.5</div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">4.3</div>
+                                <div>4</div>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-left text-xs align-middle">
+                                <strong>* 수업나눔(전문적학습공동체 제안 교내 대표수업)</strong><br>
+                                <strong>* 학교대표로 공개수업을 한 경우</strong><br>
+                                <strong>* 학부모공개수업을 한 경우</strong>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-center font-bold">
+                                <div id="classOpenResult">오류</div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="border border-gray-400 p-2 text-center font-medium bg-orange-50" rowspan="2">②<br>생활지도<br>(30점)</td>
+                            <td class="border border-gray-400 p-2 text-center font-medium bg-orange-50">담임<br>(20점)</td>
+                            <td class="border border-gray-400 p-2 text-left" colspan="3">
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <input type="checkbox" class="mr-2" data-group="4" data-type="applicable">해당
+                                </div>
+                                <div>
+                                    <input type="checkbox" class="mr-2" data-group="4" data-type="not_applicable">미해당
+                                </div>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-center" colspan="1">
+                                <div class="border-b border-gray-300 pb-1 mb-1">20</div>
+                                <div>19</div>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-left text-xs align-middle">
+                                <strong>* 12개월 기준</strong><br>
+                                <strong>- 월별 산출, 미근무(15일이상)월수*0.1</strong><br>
+                                <strong>* 담임 인사 발령 기준</strong>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-center font-bold">
+                                <div id="lifeGuidanceResult"
+                                     onclick="openScoreModal('lifeGuidance')"
+                                     style="cursor: pointer; min-height: 20px;"
+                                     title="클릭하여 미근무월수 감점 적용">오류</div>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-center font-bold" rowspan="2">
+                                <div id="lifeGuidanceTotalResult">오류</div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="border border-gray-400 p-2 text-center font-medium bg-orange-50">교내외<br>안전<br>생활<br>지도<br>(10점)</td>
+                            <td class="border border-gray-400 p-2 text-left" colspan="3">
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <input type="checkbox" class="mr-2" data-group="5" data-type="department_head">생활안전인권부장, 학년부장
+                                </div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <input type="checkbox" class="mr-2" data-group="5" data-type="homeroom_violence">담임, 학폭담당
+                                </div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <input type="checkbox" class="mr-2" data-group="5" data-type="over_50">그 외 교사(50%이상 해당자)
+                                </div>
+                                <div>
+                                    <input type="checkbox" class="mr-2" data-group="5" data-type="under_50">그 외 교사(50%미만 해당자)
+                                </div>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-center" colspan="1">
+                                <div class="border-b border-gray-300 pb-1 mb-1">10</div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">9.5</div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">9</div>
+                                <div>8.5</div>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-left text-xs align-middle">
+                                <strong>* 학생생활지도(교통지도, 급식지도)</strong><br>
+                                <strong>* 도서관지도, 추가 0.2(비교과도 추가부여)</strong><br>
+                                <strong>* 해당부서 일지 등을 만들어 출석 확인</strong><br>
+                                <strong>* 추진실적 미인정기간: 적용점수 – 미근무월수×0.2</strong>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-center font-bold">
+                                <div id="violencePreventionResult"
+                                     onclick="openScoreModal('violencePrevention')"
+                                     style="cursor: pointer; min-height: 20px;"
+                                     title="클릭하여 도서관지도 추가점수 및 미근무월수 감점 적용">오류</div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="border border-gray-400 p-2 text-center font-medium bg-teal-50">③<br>전문성개발<br>(10점)</td>
+                            <td class="border border-gray-400 p-2 text-center font-medium bg-teal-50">개인<br>연수<br>시간<br>(10점)</td>
+                            <td class="border border-gray-400 p-2 text-left" colspan="3">
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <input type="checkbox" class="mr-2" data-group="6" data-type="over_60">60시간이상
+                                </div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <input type="checkbox" class="mr-2" data-group="6" data-type="45_to_60">45시간이상~ 60시간미만
+                                </div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <input type="checkbox" class="mr-2" data-group="6" data-type="30_to_45">30시간이상~ 45시간미만
+                                </div>
+                                <div>
+                                    <input type="checkbox" class="mr-2" data-group="6" data-type="under_30">30시간미만
+                                </div>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-center" colspan="1">
+                                <div class="border-b border-gray-300 pb-1 mb-1">10</div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">9</div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">8</div>
+                                <div>7</div>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-left text-xs align-middle">
+                                <strong>* 나이스 연수 출력 제출</strong><br>
+                                <strong>* 나이스 미기록 연수는 이수증 제출</strong><br>
+                                <strong>* 연수 인정 기간은 2025.3.1.~ 2026.2.28.</strong><br>
+                                <strong>결과보고 기간 이후 연수이수는 선반영(연수기간확인)하고 추후 이수증 등 증빙자료를 개별 제출함.</strong>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-center font-bold">
+                                <div id="professionalDevResult">오류</div>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-center font-bold">
+                                <div id="professionalDevTotalResult">오류</div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="border border-gray-400 p-2 text-center font-medium bg-purple-50" rowspan="4">④<br>담당<br>업무<br>(30점)</td>
+                            <td class="border border-gray-400 p-2 text-center font-medium bg-purple-50">업무<br>추진<br>실적<br>(10점)</td>
+                            <td class="border border-gray-400 p-2 text-left" colspan="3">
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <input type="checkbox" class="mr-2" data-group="7" data-type="department_head">부장
+                                </div>
+                                <div>
+                                    <input type="checkbox" class="mr-2" data-group="7" data-type="not_applicable">미해당
+                                </div>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-center" colspan="1">
+                                <div class="border-b border-gray-300 pb-1 mb-1">10</div>
+                                <div>9</div>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-left text-xs align-middle">
+                                <strong>* 업무추진실적 (10점)</strong><br>
+                                <strong>* 12개월 기준(월별산출, 15일 미만은 절삭)</strong><br>
+                                <strong>* 부장 인사 발령 기준</strong><br>
+                                <strong>* 추진실적 미인정기간 :</strong><br>
+                                <strong>&nbsp;&nbsp;적용점수 –미근무 월수×0.1</strong>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-center font-bold">
+                                <div id="workPerformanceResult"
+                                     onclick="openScoreModal('workPerformance')"
+                                     style="cursor: pointer; min-height: 20px;"
+                                     title="클릭하여 미근무월수 감점 적용">오류</div>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-center font-bold" rowspan="4">
+                                <div id="assignedWorkTotalResult">오류</div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="border border-gray-400 p-2 text-center font-medium bg-purple-50">교과<br>업무<br>(5점)</td>
+                            <td class="border border-gray-400 p-2 text-left" colspan="3">
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <span class="text-sm font-medium">기본점수: 4점</span>
+                                </div>
+                                <div class="border-b border-gray-300 pb-1 mb-1">
+                                    <input type="checkbox" class="mr-2" data-group="8" data-type="club_teacher">자율동아리 지도교사 (+0.5)
+                                </div>
+                                <div>
+                                    <input type="checkbox" class="mr-2" data-group="8" data-type="subject_head">교과부장 (+0.5)
+                                </div>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-center" colspan="1">
+                                <div class="text-center">4 + 추가점수</div>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-left text-xs align-middle">
+                                <strong>* 교과업무 (5점)</strong><br>
+                                <strong>* 교과부장, 자율동아리지도교사 중복인정</strong><br>
+                                <strong>* 자율동아리 지도교사는 학생들을 이수완료 시켰을 경우 인정(증빙자료첨부)</strong>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-center font-bold">
+                                <div id="subjectWorkResult">오류</div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="border border-gray-400 p-2 text-center font-medium bg-purple-50">업무<br>곤란도<br>(5점)</td>
+                            <td class="border border-gray-400 p-2" colspan="4">
+                                <!-- 1-4단계 메인 선택 -->
+                                <div class="mb-4">
+                                    <div class="border-b border-gray-300 pb-1 mb-1">
+                                        <input type="checkbox" class="mr-2" data-group="9" data-type="level_1">해당자 (5점)
+                                    </div>
+                                    <div class="border-b border-gray-300 pb-1 mb-1">
+                                        <input type="checkbox" class="mr-2" data-group="9" data-type="level_2">해당자 (4.5점)
+                                    </div>
+                                    <div class="border-b border-gray-300 pb-1 mb-1">
+                                        <input type="checkbox" class="mr-2" data-group="9" data-type="level_3">해당자 (4점)
+                                    </div>
+                                    <div>
+                                        <input type="checkbox" class="mr-2" data-group="9" data-type="level_4">기본점수 (3.5점)
+                                    </div>
+                                </div>
+
+                                <!-- 교육활동 활성화 표 -->
+                                <table class="w-full border-collapse">
+                                    <tbody>
+                                        <tr>
+                                            <td class="border border-gray-300 p-1 text-center text-xs bg-blue-50 w-1/4">구분</td>
+                                            <td class="border border-gray-300 p-1 text-center text-xs bg-blue-50" style="width: 57%;">내용</td>
+                                            <td class="border border-gray-300 p-1 text-center text-xs bg-blue-50" style="width: 18%;">점수</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="border border-gray-300 p-1 text-center text-xs bg-green-50" rowspan="5">교육활동<br>활성화</td>
+                                            <td class="border border-gray-300 p-1 text-xs">
+                                                <label class="flex items-center cursor-pointer">
+                                                    <input type="checkbox" class="mr-2" data-group="9_edu" data-type="school_award_1">
+                                                    <span>학교표창유공교원 1</span>
+                                                </label>
+                                            </td>
+                                            <td class="border border-gray-300 p-1 text-center text-xs">+0.2</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="border border-gray-300 p-1 text-xs">
+                                                <label class="flex items-center cursor-pointer">
+                                                    <input type="checkbox" class="mr-2" data-group="9_edu" data-type="school_award_2">
+                                                    <span>학교표창유공교원 2</span>
+                                                </label>
+                                            </td>
+                                            <td class="border border-gray-300 p-1 text-center text-xs">+0.2</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="border border-gray-300 p-1 text-xs">
+                                                <label class="flex items-center cursor-pointer">
+                                                    <input type="checkbox" class="mr-2" data-group="9_edu" data-type="external_project_1">
+                                                    <span>외부기관공모사업 업무추진단 1</span>
+                                                </label>
+                                            </td>
+                                            <td class="border border-gray-300 p-1 text-center text-xs">+0.2</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="border border-gray-300 p-1 text-xs">
+                                                <label class="flex items-center cursor-pointer">
+                                                    <input type="checkbox" class="mr-2" data-group="9_edu" data-type="external_project_2">
+                                                    <span>외부기관공모사업 업무추진단 2</span>
+                                                </label>
+                                            </td>
+                                            <td class="border border-gray-300 p-1 text-center text-xs">+0.2</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="border border-gray-300 p-1 text-xs">
+                                                <label class="flex items-center cursor-pointer">
+                                                    <input type="checkbox" class="mr-2" data-group="9_edu" data-type="pilot_school">
+                                                    <span>선도학교 시범학교 담당자</span>
+                                                </label>
+                                            </td>
+                                            <td class="border border-gray-300 p-1 text-center text-xs">+0.5</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-left text-xs align-middle">
+                                <strong>* 업무곤란도 (5점)</strong><br>
+                                <strong>* 5점:</strong> 교무부장, 연구부장, 학생부장, 학폭(담임)<br>
+                                &nbsp;&nbsp;- 학폭처리건수 5회 이상<br>
+                                <strong>* 4.5점:</strong> 통합담임+순회 / 학폭담당(비담임)<br>
+                                &nbsp;&nbsp;- 학폭처리건수 5회 이상<br>
+                                <strong>* 4점:</strong> 통합학급담임 / 순회교사(담임겸임)<br>
+                                <strong>* 3.5점:</strong> 미해당<br>
+                                <strong>* 학교표창 유공교원/외부기관 공모사업은 최대 2개를 넘지 않음</strong><br>
+                                &nbsp;&nbsp;(계획서와 보고서 작성)<br>
+                                &nbsp;&nbsp;예) 디지털선도학교, 365+체육온활동 등
+                            </td>
+                            <td class="border border-gray-400 p-2 text-center font-bold">
+                                <div id="workDifficultyResult">오류</div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="border border-gray-400 p-2 text-center font-medium bg-purple-50">각종<br>위원회<br>활동<br>(10점)</td>
+                            <td class="border border-gray-400 p-2 text-left" colspan="3">
+                                <div class="mb-2">
+                                    <span class="text-sm font-medium">기본점수: 8.5점</span>
+                                </div>
+                                <div class="border-b border-gray-300 pb-2 mb-2 flex items-center">
+                                    <input type="checkbox" class="mr-2" data-group="10" data-type="committee_1">
+                                    <input type="text" class="mr-2 border border-gray-300 rounded px-2 py-1 text-sm" style="width: 60%;" placeholder="위원회명 입력" maxlength="30">
+                                    <span>(+0.5)</span>
+                                </div>
+                                <div class="border-b border-gray-300 pb-2 mb-2 flex items-center">
+                                    <input type="checkbox" class="mr-2" data-group="10" data-type="committee_2">
+                                    <input type="text" class="mr-2 border border-gray-300 rounded px-2 py-1 text-sm" style="width: 60%;" placeholder="위원회명 입력" maxlength="30">
+                                    <span>(+0.5)</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" class="mr-2" data-group="10" data-type="committee_3">
+                                    <input type="text" class="mr-2 border border-gray-300 rounded px-2 py-1 text-sm" style="width: 60%;" placeholder="위원회명 입력" maxlength="30">
+                                    <span>(+0.5)</span>
+                                </div>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-center" colspan="1">
+                                <div class="text-center">8.5 + 추가점수</div>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-left text-xs align-middle">
+                                <strong>* 각종위원회 활동 (10점)</strong><br>
+                                <strong>* 다음의 위원회에 소속된 수를 기입함.</strong><br>
+                                <strong>- 위원회별 4회이상 협의(참석여부) 후</strong><br>
+                                <strong>&nbsp;&nbsp;&nbsp;내부결재가 있는 위원회 수 인정</strong><br>
+                                <strong>&nbsp;&nbsp;&nbsp;(단, 상조회임원단은 별도로 운영함)</strong><br>
+                                <strong>- 증빙서류 담당자 소속 위원 배부 개인별제출</strong>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-center font-bold">
+                                <div id="committeeWorkResult">오류</div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="border border-gray-400 p-2 text-center font-bold bg-gray-200" colspan="8">기타참고사항</td>
+                            <td class="border border-gray-400 p-2 text-center font-bold bg-gray-200">
+                                합계
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="border border-gray-400 p-2 text-left text-xs" colspan="8" style="background-color: #f9fafb; line-height: 1.4;">
+                                <strong>※ 점수의 총점은 100점 만점으로 적용한다.</strong><br>
+                                <strong>※ 보건, 사서, 전문상담, 영양 공모사업 : 시도단위 및 외부 공모사업 운영(계획서 및 보고서 제출)</strong><br>
+                                <strong>※ 모든 점수는 소수 셋째자리에서 반올림하여 소수 둘째자리로 나타냄.</strong><br>
+                                <strong>※ 개인평가의 산정기간은 2025.03.01.~2026. 2.28.까지임.(개인연수시간 별도)</strong><br>
+                                <strong>※ 동점자 처리기준 : 다면평가 정량평가 요소 중 1순위 '학습지도', 2순위 '담당업무, 3순위 '생활지도', 4순위 '전문성개발' 점수가 높은자, 기준을 모두 고려하였음에도 동점자가 발생하는 경우 추후 다면평가 관리위원회를 개최하여 협의함.</strong><br>
+                                <strong>* 육아휴직 기간은 근무 일수를 제외하여 개월 수를 산정하지 않음.</strong>
+                            </td>
+                            <td class="border border-gray-400 p-2 text-center font-bold" style="background-color: #f9fafb;">
+                                <div id="overallGrandTotal">오류</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+
+            <div class="text-center mt-8">
+                <button id="submitBtn" class="btn btn-success" onclick="submitEvaluation()">
+                    📤 평가 제출하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase 설정 모달 -->
+    <div id="firebaseModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center;">
+        <div class="modal-content" style="background: white; padding: 30px; border-radius: 12px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
+            <h2 class="text-xl font-bold mb-4">🔧 Firebase 설정</h2>
+            <div id="savedSettingsInfo" class="hidden bg-green-100 text-green-800 p-3 rounded mb-4">
+                저장된 설정이 있습니다. 필요시 수정해주세요.
+            </div>
+            <div class="form-group mb-4">
+                <label for="firebaseApiKey" class="block font-weight-600 color-#374151 margin-bottom-8px">Firebase API Key:</label>
+                <input type="password" id="firebaseApiKey" placeholder="Firebase API Key 입력" class="w-full p-3 border-2 border-gray-300 rounded">
+            </div>
+            <div class="form-group mb-6">
+                <label for="firebaseProjectId" class="block font-weight-600 color-#374151 margin-bottom-8px">Firebase Project ID:</label>
+                <input type="text" id="firebaseProjectId" placeholder="Project ID 입력" class="w-full p-3 border-2 border-gray-300 rounded">
+            </div>
+            <div class="flex gap-3">
+                <button onclick="saveFirebaseSettings()" class="btn btn-primary flex-1" style="padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white;">설정 저장</button>
+                <button onclick="clearFirebaseSettings()" class="btn flex-1" style="padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; background: #ef4444; color: white;">설정 삭제</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 점수 조정 모달 -->
+    <div id="scoreModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center;">
+        <div class="modal-content" style="background: white; padding: 30px; border-radius: 12px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
+            <h2 class="text-xl font-bold mb-4">📊 점수 조정</h2>
+
+            <div class="mb-4">
+                <label class="block font-weight-600 color-#374151 margin-bottom-8px">현재 기본 점수:</label>
+                <div id="currentScore" class="text-2xl font-bold text-blue-600 mb-4">10</div>
+            </div>
+
+            <div class="mb-4" id="libraryGuideSection" style="display: none;">
+                <label for="libraryGuide" class="block font-weight-600 color-#374151 margin-bottom-8px">도서관지도:</label>
+                <div class="flex items-center">
+                    <input type="checkbox" id="libraryGuide" class="mr-2">
+                    <span>도서관지도 담당 (+0.2점)</span>
+                </div>
+            </div>
+
+            <div class="mb-4" id="semesterHoursSection" style="display: none;">
+                <div class="flex items-center mb-3">
+                    <input type="checkbox" id="differentSemesters" class="mr-2">
+                    <span>1,2학기 시수가 다른가요?</span>
+                </div>
+                <div id="semesterInputs" style="display: none;">
+                    <div class="grid grid-cols-2 gap-4 mb-3">
+                        <div>
+                            <label for="semester1Hours" class="block text-sm font-medium mb-1">1학기 시수:</label>
+                            <input type="number" id="semester1Hours" min="0" max="25" step="0.5" class="w-full p-2 border border-gray-300 rounded" placeholder="1학기">
+                        </div>
+                        <div>
+                            <label for="semester2Hours" class="block text-sm font-medium mb-1">2학기 시수:</label>
+                            <input type="number" id="semester2Hours" min="0" max="25" step="0.5" class="w-full p-2 border border-gray-300 rounded" placeholder="2학기">
+                        </div>
+                    </div>
+                    <div class="text-sm text-blue-600 mb-2">
+                        평균 시수: <span id="averageHours">0</span>시간
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label for="absentMonths" class="block font-weight-600 color-#374151 margin-bottom-8px">미근무 월수:</label>
+                <input type="number" id="absentMonths" min="0" max="12" value="0" class="w-full p-3 border-2 border-gray-300 rounded" placeholder="미근무 월수 입력">
+            </div>
+
+            <div class="mb-4">
+                <label class="block font-weight-600 color-#374151 margin-bottom-8px">감점 계산:</label>
+                <div class="text-sm text-gray-600 mb-2">감점 = 미근무 월수 × 0.1</div>
+                <div id="deductionAmount" class="text-lg font-medium text-red-600">0</div>
+            </div>
+
+            <div class="mb-6">
+                <label class="block font-weight-600 color-#374151 margin-bottom-8px">최종 점수:</label>
+                <div id="finalScore" class="text-2xl font-bold text-green-600">10</div>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="applyScoreAdjustment()" class="btn btn-primary flex-1" style="padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white;">적용</button>
+                <button onclick="closeScoreModal()" class="btn flex-1" style="padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; background: #6b7280; color: white;">취소</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 점수 조정 모달 관련 변수
+        let currentScoreType = '';
+
+        // 시수에 따른 점수 계산 함수
+        function getScoreFromHours(hours) {
+            // 시수-점수 매핑 테이블 (현재 시수에 맞게 수정)
+            const scoreTable = [
+                { hours: 24, score: 20 },
+                { hours: 23, score: 19.5 },
+                { hours: 22, score: 19 },
+                { hours: 21, score: 18.5 },
+                { hours: 20, score: 18 },
+                { hours: 19, score: 17.5 },
+                { hours: 18, score: 17 },
+                { hours: 17, score: 16.5 },
+                { hours: 16, score: 16 },
+                { hours: 15, score: 15.5 },
+                { hours: 14, score: 15 },
+                { hours: 13, score: 14.5 },
+                { hours: 12, score: 14 },
+                { hours: 11, score: 13.5 }
+            ];
+
+            // 정확히 일치하는 시수가 있는지 확인
+            for (let i = 0; i < scoreTable.length; i++) {
+                if (hours === scoreTable[i].hours) {
+                    return scoreTable[i].score;
+                }
+            }
+
+            // 소수점 시수인 경우 중간 점수 계산
+            for (let i = 0; i < scoreTable.length - 1; i++) {
+                const currentHours = scoreTable[i].hours;
+                const nextHours = scoreTable[i + 1].hours;
+
+                if (hours < currentHours && hours > nextHours) {
+                    const currentScore = scoreTable[i].score;
+                    const nextScore = scoreTable[i + 1].score;
+                    return (currentScore + nextScore) / 2;
+                }
+            }
+
+            // 24시간 초과인 경우 최고 점수
+            if (hours > 24) return 20;
+
+            // 11시간 미만인 경우 최소 점수
+            if (hours < 11) return 13.5;
+
+            // 기타 경우 가장 가까운 하한선 점수
+            for (let i = 0; i < scoreTable.length; i++) {
+                if (hours >= scoreTable[i].hours) {
+                    return scoreTable[i].score;
+                }
+            }
+
+            return 13.5;
+        }
+
+        // 점수 조정 모달 열기
+        function openScoreModal(scoreType) {
+            currentScoreType = scoreType;
+            const modal = document.getElementById('scoreModal');
+            const currentScoreDiv = document.getElementById('currentScore');
+            const absentMonthsInput = document.getElementById('absentMonths');
+            const libraryGuideSection = document.getElementById('libraryGuideSection');
+            const libraryGuideCheckbox = document.getElementById('libraryGuide');
+
+            // 현재 체크박스 상태에 따른 기본 점수 계산
+            let baseScore = 0;
+            if (scoreType === 'workPerformance') {
+                const checkboxes = document.querySelectorAll('input[data-group="7"]:checked');
+                if (checkboxes.length === 1) {
+                    const selectedType = checkboxes[0].dataset.type;
+                    baseScore = (selectedType === 'department_head') ? 10 : 9;
+                }
+                libraryGuideSection.style.display = 'none';
+            } else if (scoreType === 'violencePrevention') {
+                const checkboxes = document.querySelectorAll('input[data-group="5"]:checked');
+                if (checkboxes.length === 1) {
+                    const selectedType = checkboxes[0].dataset.type;
+                    switch(selectedType) {
+                        case 'safety_guide': baseScore = 20; break;
+                        case 'discipline': baseScore = 15; break;
+                        case 'not_applicable': baseScore = 10; break;
+                    }
+                } else {
+                    // 체크박스가 선택되지 않은 경우 현재 표시된 점수 사용 (있다면)
+                    const currentDisplayedScore = document.getElementById('violencePreventionResult').textContent;
+                    if (currentDisplayedScore && !isNaN(parseFloat(currentDisplayedScore)) &&
+                        currentDisplayedScore !== '오류' && currentDisplayedScore !== '중복' && currentDisplayedScore !== '미입력') {
+                        baseScore = parseFloat(currentDisplayedScore);
+                    }
+                }
+                libraryGuideSection.style.display = 'block';
+                libraryGuideCheckbox.checked = false;
+            } else if (scoreType === 'lifeGuidance') {
+                const checkboxes = document.querySelectorAll('input[data-group="4"]:checked');
+                if (checkboxes.length === 1) {
+                    const selectedType = checkboxes[0].dataset.type;
+                    switch(selectedType) {
+                        case 'homeroom': baseScore = 20; break;
+                        case 'not_applicable': baseScore = 15; break;
+                    }
+                } else {
+                    // 체크박스가 선택되지 않은 경우 현재 표시된 점수 사용 (있다면)
+                    const currentDisplayedScore = document.getElementById('lifeGuidanceResult').textContent;
+                    if (currentDisplayedScore && !isNaN(parseFloat(currentDisplayedScore)) &&
+                        currentDisplayedScore !== '오류' && currentDisplayedScore !== '중복' && currentDisplayedScore !== '미입력') {
+                        baseScore = parseFloat(currentDisplayedScore);
+                    }
+                }
+                libraryGuideSection.style.display = 'none';
+            } else if (scoreType === 'learning') {
+                const checkboxes = document.querySelectorAll('input[data-group="1"]:checked');
+                if (checkboxes.length === 1) {
+                    // 수업시수는 data-hours 속성에서 점수를 가져옴
+                    const hours = parseFloat(checkboxes[0].dataset.hours);
+                    if (!isNaN(hours)) {
+                        baseScore = hours;
+                    }
+                } else {
+                    // 체크박스가 선택되지 않은 경우 현재 표시된 점수 사용 (있다면)
+                    const currentDisplayedScore = document.getElementById('learningResult').textContent;
+                    if (currentDisplayedScore && !isNaN(parseFloat(currentDisplayedScore)) &&
+                        currentDisplayedScore !== '오류' && currentDisplayedScore !== '중복' && currentDisplayedScore !== '미입력') {
+                        baseScore = parseFloat(currentDisplayedScore);
+                    }
+                }
+                libraryGuideSection.style.display = 'none';
+
+                // 수업시수의 경우 학기별 시수 섹션 표시
+                const semesterHoursSection = document.getElementById('semesterHoursSection');
+                const differentSemestersCheckbox = document.getElementById('differentSemesters');
+                const semester1Input = document.getElementById('semester1Hours');
+                const semester2Input = document.getElementById('semester2Hours');
+
+                semesterHoursSection.style.display = 'block';
+                differentSemestersCheckbox.checked = false;
+                document.getElementById('semesterInputs').style.display = 'none';
+                semester1Input.value = '';
+                semester2Input.value = '';
+                document.getElementById('averageHours').textContent = '0';
+            }
+
+            // 체크박스가 선택되지 않은 경우 현재 결과에서 점수 추출 시도
+            if (baseScore === 0) {
+                let resultElementId;
+                switch(scoreType) {
+                    case 'workPerformance': resultElementId = 'workPerformanceResult'; break;
+                    case 'violencePrevention': resultElementId = 'violencePreventionResult'; break;
+                    case 'lifeGuidance': resultElementId = 'lifeGuidanceResult'; break;
+                    case 'learning': resultElementId = 'learningResult'; break;
+                }
+
+                if (resultElementId) {
+                    const currentDisplayedScore = document.getElementById(resultElementId).textContent;
+                    if (currentDisplayedScore && !isNaN(parseFloat(currentDisplayedScore)) &&
+                        currentDisplayedScore !== '오류' && currentDisplayedScore !== '중복' && currentDisplayedScore !== '미입력') {
+                        baseScore = parseFloat(currentDisplayedScore);
+                    }
+                }
+            }
+
+            currentScoreDiv.textContent = baseScore;
+            absentMonthsInput.value = 0;
+            updateScoreCalculation();
+
+            modal.style.display = 'flex';
+        }
+
+        // 점수 조정 모달 닫기
+        function closeScoreModal() {
+            document.getElementById('scoreModal').style.display = 'none';
+        }
+
+        // 점수 계산 업데이트
+        function updateScoreCalculation() {
+            let currentScore = parseFloat(document.getElementById('currentScore').textContent) || 0;
+            const absentMonths = parseFloat(document.getElementById('absentMonths').value) || 0;
+            const libraryGuide = document.getElementById('libraryGuide').checked;
+
+            // 수업시수의 경우 학기별 시수가 입력되었는지 확인
+            if (currentScoreType === 'learning') {
+                const differentSemesters = document.getElementById('differentSemesters').checked;
+                if (differentSemesters) {
+                    const semester1Hours = parseFloat(document.getElementById('semester1Hours').value) || 0;
+                    const semester2Hours = parseFloat(document.getElementById('semester2Hours').value) || 0;
+
+                    if (semester1Hours > 0 && semester2Hours > 0) {
+                        const averageHours = (semester1Hours + semester2Hours) / 2;
+                        const averageScore = getScoreFromHours(averageHours);
+                        currentScore = averageScore;
+                        document.getElementById('currentScore').textContent = averageScore.toFixed(2);
+                        document.getElementById('averageHours').textContent = averageHours.toFixed(2);
+                    }
+                }
+            }
+
+            // 감점 계산 (업무추진실적: 0.1, 교내외안전생활지도: 0.2, 담임: 0.1, 수업시수: 0.2)
+            const deductionRate = (currentScoreType === 'violencePrevention' || currentScoreType === 'learning') ? 0.2 : 0.1;
+            const deduction = absentMonths * deductionRate;
+
+            // 추가점수 계산 (도서관지도: +0.2)
+            const libraryBonus = (libraryGuide && currentScoreType === 'violencePrevention') ? 0.2 : 0;
+
+            const finalScore = Math.max(0, currentScore + libraryBonus - deduction);
+
+            document.getElementById('deductionAmount').textContent = deduction.toFixed(2);
+            document.getElementById('finalScore').textContent = finalScore.toFixed(2);
+
+            // 감점 설명 텍스트 업데이트
+            const deductionText = (currentScoreType === 'violencePrevention' || currentScoreType === 'learning')
+                ? '감점 = 미근무 월수 × 0.2'
+                : '감점 = 미근무 월수 × 0.1';
+            document.querySelector('.text-gray-600').textContent = deductionText;
+        }
+
+        // 점수 조정 적용
+        function applyScoreAdjustment() {
+            const finalScore = parseFloat(document.getElementById('finalScore').textContent);
+
+            if (currentScoreType === 'workPerformance') {
+                const resultDiv = document.getElementById('workPerformanceResult');
+                resultDiv.textContent = finalScore.toFixed(2);
+                resultDiv.style.color = 'black';
+                resultDiv.closest('td').style.backgroundColor = 'transparent';
+                // 총점 재계산
+                updateAssignedWorkTotalScore();
+            } else if (currentScoreType === 'violencePrevention') {
+                const resultDiv = document.getElementById('violencePreventionResult');
+                resultDiv.textContent = finalScore.toFixed(2);
+                resultDiv.style.color = 'black';
+                resultDiv.closest('td').style.backgroundColor = 'transparent';
+                // 총점 재계산
+                updateLifeGuidanceTotalScore();
+            } else if (currentScoreType === 'lifeGuidance') {
+                const resultDiv = document.getElementById('lifeGuidanceResult');
+                resultDiv.textContent = finalScore.toFixed(2);
+                resultDiv.style.color = 'black';
+                resultDiv.closest('td').style.backgroundColor = 'transparent';
+                // 총점 재계산
+                updateLifeGuidanceTotalScore();
+            } else if (currentScoreType === 'learning') {
+                const resultDiv = document.getElementById('learningResult');
+                resultDiv.textContent = finalScore.toFixed(2);
+                resultDiv.style.color = 'black';
+                resultDiv.closest('td').style.backgroundColor = 'transparent';
+                // 총점 재계산
+                updateLearningTotalScore();
+            }
+
+            closeScoreModal();
+        }
+
+        // 미근무 월수 입력 시 실시간 계산
+        document.addEventListener('DOMContentLoaded', function() {
+            const absentMonthsInput = document.getElementById('absentMonths');
+            const libraryGuideCheckbox = document.getElementById('libraryGuide');
+            const differentSemestersCheckbox = document.getElementById('differentSemesters');
+            const semester1Input = document.getElementById('semester1Hours');
+            const semester2Input = document.getElementById('semester2Hours');
+
+            if (absentMonthsInput) {
+                absentMonthsInput.addEventListener('input', updateScoreCalculation);
+            }
+            if (libraryGuideCheckbox) {
+                libraryGuideCheckbox.addEventListener('change', updateScoreCalculation);
+            }
+
+            // 학기별 시수 관련 이벤트 리스너
+            if (differentSemestersCheckbox) {
+                differentSemestersCheckbox.addEventListener('change', function() {
+                    const semesterInputs = document.getElementById('semesterInputs');
+                    if (this.checked) {
+                        semesterInputs.style.display = 'block';
+                    } else {
+                        semesterInputs.style.display = 'none';
+                        semester1Input.value = '';
+                        semester2Input.value = '';
+                        document.getElementById('averageHours').textContent = '0';
+                        // 기본 점수로 되돌리기
+                        const baseScore = parseFloat(document.getElementById('currentScore').getAttribute('data-base')) || 0;
+                        document.getElementById('currentScore').textContent = baseScore;
+                    }
+                    updateScoreCalculation();
+                });
+            }
+
+            if (semester1Input && semester2Input) {
+                semester1Input.addEventListener('input', updateScoreCalculation);
+                semester2Input.addEventListener('input', updateScoreCalculation);
+            }
+        });
+
+        // 연결 상태 업데이트 함수
+        function updateConnectionStatus(connected, message = '') {
+            const statusElement = document.getElementById('connectionStatus');
+            if (connected) {
+                statusElement.textContent = '🟢 연결됨';
+                statusElement.className = 'px-3 py-1 rounded text-sm font-medium bg-green-100 text-green-800';
+            } else {
+                statusElement.textContent = message ? `🔴 ${message}` : '🔴 연결 안됨';
+                statusElement.className = 'px-3 py-1 rounded text-sm font-medium bg-red-100 text-red-800';
+            }
+        }
+
+        // Firebase 설정
+        function initializeFirebase() {
+            const apiKey = localStorage.getItem('firebaseApiKey');
+            const projectId = localStorage.getItem('firebaseProjectId');
+
+            if (!apiKey || !projectId) {
+                updateConnectionStatus(false, '설정 필요');
+                showFirebaseSettings();
+                return false;
+            }
+
+            const firebaseConfig = {
+                apiKey: apiKey,
+                authDomain: `${projectId}.firebaseapp.com`,
+                databaseURL: `https://${projectId}-default-rtdb.asia-southeast1.firebasedatabase.app`,
+                projectId: projectId,
+                storageBucket: `${projectId}.firebasestorage.app`,
+                messagingSenderId: "383693605457",
+                appId: "1:383693605457:web:b5c75a08b0fcef08188670"
+            };
+
+            try {
+                firebase.initializeApp(firebaseConfig);
+                window.database = firebase.database();
+                window.evaluationRef = database.ref('evaluations');
+
+                // 연결 테스트
+                database.ref('.info/connected').on('value', (snapshot) => {
+                    if (snapshot.val() === true) {
+                        updateConnectionStatus(true);
+                    } else {
+                        updateConnectionStatus(false, '연결 끊어짐');
+                    }
+                });
+
+                return true;
+            } catch (error) {
+                console.error('Firebase 초기화 오류:', error);
+                updateConnectionStatus(false, '초기화 실패');
+                showFirebaseSettings();
+                return false;
+            }
+        }
+
+        // Firebase 설정 관련 함수들
+        function showFirebaseSettings() {
+            const modal = document.getElementById('firebaseModal');
+            modal.style.display = 'flex';
+
+            const apiKey = localStorage.getItem('firebaseApiKey');
+            const projectId = localStorage.getItem('firebaseProjectId');
+            const savedSettingsInfo = document.getElementById('savedSettingsInfo');
+
+            if (apiKey && projectId) {
+                document.getElementById('firebaseApiKey').value = apiKey;
+                document.getElementById('firebaseProjectId').value = projectId;
+                savedSettingsInfo.classList.remove('hidden');
+            } else {
+                savedSettingsInfo.classList.add('hidden');
+            }
+        }
+
+        function saveFirebaseSettings() {
+            const apiKey = document.getElementById('firebaseApiKey').value.trim();
+            const projectId = document.getElementById('firebaseProjectId').value.trim();
+
+            if (!apiKey || !projectId) {
+                alert('API Key와 Project ID를 모두 입력해주세요.');
+                return;
+            }
+
+            localStorage.setItem('firebaseApiKey', apiKey);
+            localStorage.setItem('firebaseProjectId', projectId);
+
+            try {
+                if (firebase.apps.length > 0) {
+                    firebase.apps.forEach(app => app.delete());
+                }
+
+                const success = initializeFirebase();
+                if (success) {
+                    document.getElementById('firebaseModal').style.display = 'none';
+                    alert('Firebase 설정이 저장되고 연결되었습니다!\n다음 접속부터는 자동으로 연결됩니다.');
+                } else {
+                    updateConnectionStatus(false, '연결 실패');
+                }
+            } catch (error) {
+                console.error('Firebase 설정 오류:', error);
+                alert('Firebase 설정에 오류가 발생했습니다. API Key와 Project ID를 확인해주세요.');
+            }
+        }
+
+        function clearFirebaseSettings() {
+            if (confirm('저장된 Firebase 설정을 삭제하시겠습니까?')) {
+                localStorage.removeItem('firebaseApiKey');
+                localStorage.removeItem('firebaseProjectId');
+                document.getElementById('firebaseApiKey').value = '';
+                document.getElementById('firebaseProjectId').value = '';
+                document.getElementById('savedSettingsInfo').classList.add('hidden');
+                updateConnectionStatus(false, '설정 삭제됨');
+                alert('저장된 Firebase 설정이 삭제되었습니다.');
+            }
+        }
+
+        function loadFirebaseSettingsFromStorage() {
+            const apiKey = localStorage.getItem('firebaseApiKey');
+            const projectId = localStorage.getItem('firebaseProjectId');
+
+            if (apiKey && projectId) {
+                document.getElementById('firebaseApiKey').value = apiKey;
+                document.getElementById('firebaseProjectId').value = projectId;
+                return true;
+            }
+            return false;
+        }
+
+
+
+        function submitEvaluation() {
+            // 교사 정보 확인
+            const teacherName = document.getElementById('teacherName').value.trim();
+            const teacherSubject = document.getElementById('teacherSubject').value.trim();
+            const teacherDepartment = document.getElementById('teacherDepartment').value;
+
+            if (!teacherName || !teacherSubject || !teacherDepartment) {
+                alert('교사 정보를 모두 입력해주세요.');
+                return;
+            }
+
+            // 점수 계산 확인 (모든 체크박스가 선택되었는지 확인)
+            const overallTotal = parseFloat(document.getElementById('overallGrandTotal').textContent) || 0;
+
+            if (overallTotal === 0 || document.getElementById('overallGrandTotal').textContent === '오류') {
+                alert('평가 항목을 모두 완료해주세요.');
+                return;
+            }
+
+
+            // 각 영역별 점수 수집
+            const learningResult = parseFloat(document.getElementById('learningResult').textContent) || 0;
+            const multiGradeResult = parseFloat(document.getElementById('multiGradeResult').textContent) || 0;
+            const classOpenResult = parseFloat(document.getElementById('classOpenResult').textContent) || 0;
+            const lifeGuidanceResult = parseFloat(document.getElementById('lifeGuidanceResult').textContent) || 0;
+            const violencePreventionResult = parseFloat(document.getElementById('violencePreventionResult').textContent) || 0;
+            const professionalDevResult = parseFloat(document.getElementById('professionalDevResult').textContent) || 0;
+            const workPerformanceResult = parseFloat(document.getElementById('workPerformanceResult').textContent) || 0;
+            const subjectWorkResult = parseFloat(document.getElementById('subjectWorkResult').textContent) || 0;
+            const workDifficultyResult = parseFloat(document.getElementById('workDifficultyResult').textContent) || 0;
+            const committeeWorkResult = parseFloat(document.getElementById('committeeWorkResult').textContent) || 0;
+
+            // 위원회 정보 수집
+            const committeeInputs = document.querySelectorAll('input[data-group="10"]');
+            const committees = {};
+            let committeeIndex = 1;
+
+            committeeInputs.forEach(checkbox => {
+                if (checkbox.checked) {
+                    // 해당 체크박스와 같은 줄의 텍스트 입력란 찾기
+                    const textInput = checkbox.parentElement.querySelector('input[type="text"]');
+                    if (textInput && textInput.value.trim()) {
+                        committees[`committee${committeeIndex}`] = textInput.value.trim();
+                        committeeIndex++;
+                    }
+                }
+            });
+
+
+            const submissionData = {
+                // 교사 정보
+                teacherName: teacherName,
+                teacherSubject: teacherSubject,
+                teacherDepartment: teacherDepartment,
+
+                // 점수 정보
+                totalScore: overallTotal,
+                maxScore: 100, // 실제 최대 점수 (학습지도30 + 생활지도30 + 전문성개발10 + 담당업무30)
+
+                // 영역별 세부 점수
+                learningResult: learningResult,
+                multiGradeResult: multiGradeResult,
+                classOpenResult: classOpenResult,
+                lifeGuidanceResult: lifeGuidanceResult,
+                violencePreventionResult: violencePreventionResult,
+                professionalDevResult: professionalDevResult,
+                workPerformanceResult: workPerformanceResult,
+                subjectWorkResult: subjectWorkResult,
+                workDifficultyResult: workDifficultyResult,
+                committeeWorkResult: committeeWorkResult,
+
+                // 영역별 합계 점수
+                learningTotalScore: learningResult + multiGradeResult + classOpenResult,
+                lifeGuidanceTotalScore: lifeGuidanceResult + violencePreventionResult,
+                professionalDevTotalScore: professionalDevResult,
+                assignedWorkTotalScore: workPerformanceResult + subjectWorkResult + workDifficultyResult + committeeWorkResult,
+
+                // 위원회 정보 추가
+                ...committees,
+
+                submittedAt: new Date().toISOString()
+            };
+
+            // Firebase에 저장
+            if (window.evaluationRef) {
+                evaluationRef.push(submissionData)
+                    .then(() => {
+                        alert('평가가 성공적으로 제출되었습니다!');
+                        resetForm();
+                    })
+                    .catch((error) => {
+                        console.error('제출 오류:', error);
+                        alert('제출 중 오류가 발생했습니다. 다시 시도해주세요.');
+                    });
+            } else {
+                alert('Firebase 연결이 필요합니다. 설정을 확인해주세요.');
+            }
+        }
+
+        function resetForm() {
+            // 교사 정보 초기화
+            document.getElementById('teacherName').value = '';
+            document.getElementById('teacherSubject').value = '';
+            document.getElementById('teacherDepartment').value = '';
+
+            // 모든 체크박스 초기화
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+
+            // 배경색 초기화
+            document.querySelectorAll('.bg-yellow-200').forEach(element => {
+                element.classList.remove('bg-yellow-200', 'rounded', 'px-1');
+            });
+
+            // 점수 초기화
+            updateLearningScore();
+            updateMultiGradeScore();
+            updateClassOpenScore();
+            updateLearningTotalScore();
+            updateLifeGuidanceScore();
+            updateViolencePreventionScore();
+            updateLifeGuidanceTotalScore();
+            updateProfessionalDevScore();
+            updateAssignedWorkTotalScore();
+        }
+
+        // 체크박스 로직
+        function updateLearningScore() {
+            const checkboxes = document.querySelectorAll('input[data-group="1"]:checked');
+            const resultDiv = document.getElementById('learningResult');
+
+            // 모든 체크박스 선택 해제
+            document.querySelectorAll('input[data-group="1"]').forEach(checkbox => {
+                checkbox.disabled = false;
+            });
+
+            if (checkboxes.length === 0) {
+                resultDiv.textContent = '미입력';
+                resultDiv.style.color = 'red';
+                resultDiv.closest('td').style.backgroundColor = 'yellow';
+            } else if (checkboxes.length >= 2) {
+                resultDiv.textContent = '중복';
+                resultDiv.style.color = 'red';
+                resultDiv.closest('td').style.backgroundColor = 'yellow';
+            } else {
+                const selectedHours = parseFloat(checkboxes[0].dataset.hours);
+                let score = 0;
+
+                // 첫 번째 구간 (24~17.5)
+                if (selectedHours >= 17.5 && selectedHours <= 24) {
+                    score = 20 - (24 - selectedHours) * 0.5;
+                }
+                // 두 번째 구간 (17~11)
+                else if (selectedHours >= 11 && selectedHours <= 17) {
+                    score = 16.5 - (17 - selectedHours) * 0.5;
+                }
+
+                resultDiv.textContent = score.toFixed(2);
+                resultDiv.style.color = 'black';
+                resultDiv.closest('td').style.backgroundColor = 'transparent';
+            }
+
+            updateTotalScore();
+        }
+
+        // 다학년지도 점수 계산
+        function updateMultiGradeScore() {
+            const checkboxes = document.querySelectorAll('input[data-group="2"]:checked');
+            const resultDiv = document.getElementById('multiGradeResult');
+
+            if (checkboxes.length === 0) {
+                resultDiv.textContent = '미입력';
+                resultDiv.style.color = 'red';
+                resultDiv.closest('td').style.backgroundColor = 'yellow';
+                return 0;
+            } else if (checkboxes.length >= 2) {
+                resultDiv.textContent = '중복';
+                resultDiv.style.color = 'red';
+                resultDiv.closest('td').style.backgroundColor = 'yellow';
+                return 0;
+            } else {
+                const selectedType = checkboxes[0].dataset.type;
+                let score = 0;
+
+                if (selectedType === 'both') {
+                    score = 5;
+                } else if (selectedType === 'single') {
+                    score = 4.5;
+                } else if (selectedType === 'none') {
+                    score = 4;
+                }
+
+                resultDiv.textContent = score.toString();
+                resultDiv.style.color = 'black';
+                resultDiv.closest('td').style.backgroundColor = 'transparent';
+                return score;
+            }
+        }
+
+        // 수업공개 점수 계산
+        function updateClassOpenScore() {
+            const checkboxes = document.querySelectorAll('input[data-group="3"]:checked');
+            const resultDiv = document.getElementById('classOpenResult');
+
+            if (checkboxes.length === 0) {
+                resultDiv.textContent = '미입력';
+                resultDiv.style.color = 'red';
+                resultDiv.closest('td').style.backgroundColor = 'yellow';
+                return 0;
+            } else if (checkboxes.length >= 2) {
+                resultDiv.textContent = '중복';
+                resultDiv.style.color = 'red';
+                resultDiv.closest('td').style.backgroundColor = 'yellow';
+                return 0;
+            } else {
+                const selectedType = checkboxes[0].dataset.type;
+                let score = 0;
+
+                if (selectedType === 'school') {
+                    score = 5;
+                } else if (selectedType === 'internal') {
+                    score = 4.5;
+                } else if (selectedType === 'parent') {
+                    score = 4.3;
+                } else if (selectedType === 'none') {
+                    score = 4;
+                }
+
+                resultDiv.textContent = score.toString();
+                resultDiv.style.color = 'black';
+                resultDiv.closest('td').style.backgroundColor = 'transparent';
+                return score;
+            }
+        }
+
+        function updateLearningTotalScore() {
+            // 수업시수 점수 가져오기 (수동 조정된 경우 그 값 사용)
+            const learningResultDiv = document.getElementById('learningResult');
+            let learningResult;
+
+            if (learningResultDiv.textContent &&
+                !isNaN(parseFloat(learningResultDiv.textContent)) &&
+                learningResultDiv.textContent !== '오류' &&
+                learningResultDiv.textContent !== '중복' &&
+                learningResultDiv.textContent !== '미입력') {
+                // 이미 수동으로 조정된 점수가 있으면 그것을 사용
+                learningResult = learningResultDiv.textContent;
+            } else {
+                // 자동 계산된 점수 사용
+                learningResult = learningResultDiv.textContent;
+            }
+            const multiGradeScore = updateMultiGradeScore();
+            const classOpenScore = updateClassOpenScore();
+            const learningTotalResultDiv = document.getElementById('learningTotalResult');
+
+            let learningTotal = 0;
+            let hasError = false;
+
+            // 수업시수 점수 확인
+            if (learningResult === '오류' || learningResult === '중복' || learningResult === '미입력') {
+                hasError = true;
+            } else {
+                const learningScore = parseFloat(learningResult);
+                if (!isNaN(learningScore)) {
+                    learningTotal += learningScore;
+                } else {
+                    hasError = true;
+                }
+            }
+
+            // 다학년지도 점수 확인
+            if (multiGradeScore <= 0) {
+                hasError = true;
+            } else {
+                learningTotal += multiGradeScore;
+            }
+
+            // 수업공개 점수 확인
+            if (classOpenScore <= 0) {
+                hasError = true;
+            } else {
+                learningTotal += classOpenScore;
+            }
+
+            // 학습지도 총점 표시
+            if (hasError) {
+                learningTotalResultDiv.textContent = '오류';
+                learningTotalResultDiv.style.color = 'yellow';
+                learningTotalResultDiv.closest('td').style.backgroundColor = 'red';
+            } else {
+                learningTotalResultDiv.textContent = learningTotal.toFixed(2);
+                learningTotalResultDiv.style.color = 'black';
+                learningTotalResultDiv.closest('td').style.backgroundColor = 'transparent';
+            }
+
+            updateTotalScore();
+        }
+
+        function updateWorkPerformanceScore() {
+            const checkboxes = document.querySelectorAll('input[data-group="7"]:checked');
+            const resultDiv = document.getElementById('workPerformanceResult');
+
+            if (checkboxes.length === 0) {
+                resultDiv.textContent = '미입력';
+                resultDiv.style.color = 'red';
+                resultDiv.closest('td').style.backgroundColor = 'yellow';
+                return 0;
+            } else if (checkboxes.length >= 2) {
+                resultDiv.textContent = '중복';
+                resultDiv.style.color = 'red';
+                resultDiv.closest('td').style.backgroundColor = 'yellow';
+                return 0;
+            } else {
+                const selectedType = checkboxes[0].dataset.type;
+                let score = 0;
+
+                if (selectedType === 'department_head') {
+                    score = 10;
+                } else if (selectedType === 'not_applicable') {
+                    score = 9;
+                }
+
+                resultDiv.textContent = score.toString();
+                resultDiv.style.color = 'black';
+                resultDiv.closest('td').style.backgroundColor = 'transparent';
+                return score;
+            }
+        }
+
+        function updateSubjectWorkScore() {
+            const checkboxes = document.querySelectorAll('input[data-group="8"]:checked');
+            const resultDiv = document.getElementById('subjectWorkResult');
+
+            let score = 4; // 기본점수
+
+            checkboxes.forEach(checkbox => {
+                const selectedType = checkbox.dataset.type;
+                if (selectedType === 'club_teacher' || selectedType === 'subject_head') {
+                    score += 0.5;
+                }
+            });
+
+            resultDiv.textContent = score.toString();
+            resultDiv.style.color = 'black';
+            return score;
+        }
+
+        function updateWorkDifficultyScore() {
+            const mainCheckboxes = document.querySelectorAll('input[data-group="9"]:checked');
+            const eduCheckboxes = document.querySelectorAll('input[data-group="9_edu"]:checked');
+            const resultDiv = document.getElementById('workDifficultyResult');
+
+            let score = 0;
+
+            // 1-4단계 메인 선택 (단독 선택만 허용)
+            if (mainCheckboxes.length > 1) {
+                resultDiv.textContent = '중복';
+                resultDiv.style.color = 'red';
+                resultDiv.closest('td').style.backgroundColor = 'yellow';
+                return 0;
+            }
+
+            // 메인 업무곤란도 점수 계산
+            if (mainCheckboxes.length === 1) {
+                const selectedType = mainCheckboxes[0].dataset.type;
+                switch(selectedType) {
+                    case 'level_1': score = 5.0; break;   // 해당자
+                    case 'level_2': score = 4.5; break;   // 해당자
+                    case 'level_3': score = 4.0; break;   // 해당자
+                    case 'level_4': score = 3.5; break;   // 기본점수
+                    default: score = 0;
+                }
+            }
+            // 메인 항목이 선택되지 않았으면 기본 점수
+            else {
+                score = 3.5;
+            }
+
+            // 교육활동 활성화 추가 점수 계산 (메인과 독립적으로 작동)
+            if (eduCheckboxes.length > 0) {
+                eduCheckboxes.forEach(checkbox => {
+                    const selectedType = checkbox.dataset.type;
+                    switch(selectedType) {
+                        case 'school_award_1': score += 0.2; break;
+                        case 'school_award_2': score += 0.2; break;
+                        case 'external_project_1': score += 0.2; break;
+                        case 'external_project_2': score += 0.2; break;
+                        case 'pilot_school': score += 0.5; break;
+                    }
+                });
+            }
+
+            // 최대 5점 제한
+            if (score > 5) score = 5;
+
+            // 부동소수점 연산 오류 방지를 위해 소수점 첫째자리까지 반올림
+            score = Math.round(score * 10) / 10;
+
+            resultDiv.textContent = score.toString();
+            resultDiv.style.color = 'black';
+            return score;
+        }
+
+        function updateCommitteeWorkScore() {
+            const checkboxes = document.querySelectorAll('input[data-group="10"]:checked');
+            const resultDiv = document.getElementById('committeeWorkResult');
+
+            let score = 8.5; // 기본점수
+
+            checkboxes.forEach(checkbox => {
+                const selectedType = checkbox.dataset.type;
+                if (selectedType === 'committee_1' || selectedType === 'committee_2' || selectedType === 'committee_3') {
+                    score += 0.5;
+                }
+            });
+
+            // 최대 10점 제한 (기본점수 8.5 + 최대 1.5점)
+            if (score > 10) score = 10;
+
+            resultDiv.textContent = score.toString();
+            resultDiv.style.color = 'black';
+            return score;
+        }
+
+        function updateLifeGuidanceScore() {
+            const checkboxes = document.querySelectorAll('input[data-group="4"]:checked');
+            const resultDiv = document.getElementById('lifeGuidanceResult');
+
+            if (checkboxes.length === 0) {
+                resultDiv.textContent = '미입력';
+                resultDiv.style.color = 'red';
+                resultDiv.closest('td').style.backgroundColor = 'yellow';
+                return 0;
+            } else if (checkboxes.length >= 2) {
+                resultDiv.textContent = '중복';
+                resultDiv.style.color = 'red';
+                resultDiv.closest('td').style.backgroundColor = 'yellow';
+                return 0;
+            } else {
+                const selectedType = checkboxes[0].dataset.type;
+                let score = 0;
+
+                if (selectedType === 'applicable') {
+                    score = 20;
+                } else if (selectedType === 'not_applicable') {
+                    score = 19;
+                }
+
+                resultDiv.textContent = score.toString();
+                resultDiv.style.color = 'black';
+                resultDiv.closest('td').style.backgroundColor = 'transparent';
+                return score;
+            }
+        }
+
+        function updateViolencePreventionScore() {
+            const checkboxes = document.querySelectorAll('input[data-group="5"]:checked');
+            const resultDiv = document.getElementById('violencePreventionResult');
+
+            if (checkboxes.length === 0) {
+                resultDiv.textContent = '미입력';
+                resultDiv.style.color = 'red';
+                resultDiv.closest('td').style.backgroundColor = 'yellow';
+                return 0;
+            } else if (checkboxes.length >= 2) {
+                resultDiv.textContent = '중복';
+                resultDiv.style.color = 'red';
+                resultDiv.closest('td').style.backgroundColor = 'yellow';
+                return 0;
+            } else {
+                const selectedType = checkboxes[0].dataset.type;
+                let score = 0;
+
+                if (selectedType === 'department_head') {
+                    score = 10;
+                } else if (selectedType === 'homeroom_violence') {
+                    score = 9.5;
+                } else if (selectedType === 'over_50') {
+                    score = 9;
+                } else if (selectedType === 'under_50') {
+                    score = 8.5;
+                }
+
+                resultDiv.textContent = score.toString();
+                resultDiv.style.color = 'black';
+                resultDiv.closest('td').style.backgroundColor = 'transparent';
+                return score;
+            }
+        }
+
+        function updateProfessionalDevScore() {
+            const checkboxes = document.querySelectorAll('input[data-group="6"]:checked');
+            const resultDiv = document.getElementById('professionalDevResult');
+            const totalResultDiv = document.getElementById('professionalDevTotalResult');
+
+            if (checkboxes.length === 0) {
+                resultDiv.textContent = '미입력';
+                resultDiv.style.color = 'red';
+                resultDiv.closest('td').style.backgroundColor = 'yellow';
+                totalResultDiv.textContent = '오류';
+                totalResultDiv.style.color = 'yellow';
+                totalResultDiv.closest('td').style.backgroundColor = 'red';
+                return 0;
+            } else if (checkboxes.length >= 2) {
+                resultDiv.textContent = '중복';
+                resultDiv.style.color = 'red';
+                resultDiv.closest('td').style.backgroundColor = 'yellow';
+                totalResultDiv.textContent = '오류';
+                totalResultDiv.style.color = 'yellow';
+                totalResultDiv.closest('td').style.backgroundColor = 'red';
+                return 0;
+            } else {
+                const selectedType = checkboxes[0].dataset.type;
+                let score = 0;
+
+                if (selectedType === 'over_60') {
+                    score = 10;
+                } else if (selectedType === '45_to_60') {
+                    score = 9;
+                } else if (selectedType === '30_to_45') {
+                    score = 8;
+                } else if (selectedType === 'under_30') {
+                    score = 7;
+                }
+
+                resultDiv.textContent = score.toString();
+                resultDiv.style.color = 'black';
+                resultDiv.closest('td').style.backgroundColor = 'transparent';
+                totalResultDiv.textContent = score.toString();
+                totalResultDiv.style.color = 'black';
+                totalResultDiv.closest('td').style.backgroundColor = 'transparent';
+                return score;
+            }
+        }
+
+        function updateLifeGuidanceTotalScore() {
+            // 담임 점수 가져오기 (수동 조정된 경우 그 값 사용)
+            const lifeGuidanceResultDiv = document.getElementById('lifeGuidanceResult');
+            let lifeGuidanceResult;
+
+            if (lifeGuidanceResultDiv.textContent &&
+                !isNaN(parseFloat(lifeGuidanceResultDiv.textContent)) &&
+                lifeGuidanceResultDiv.textContent !== '오류' &&
+                lifeGuidanceResultDiv.textContent !== '중복' &&
+                lifeGuidanceResultDiv.textContent !== '미입력') {
+                // 이미 수동으로 조정된 점수가 있으면 그것을 사용
+                lifeGuidanceResult = lifeGuidanceResultDiv.textContent;
+            } else {
+                // 자동 계산된 점수 사용
+                lifeGuidanceResult = lifeGuidanceResultDiv.textContent;
+            }
+
+            // 교내외 안전생활지도 점수 가져오기 (수동 조정된 경우 그 값 사용)
+            const violencePreventionResultDiv = document.getElementById('violencePreventionResult');
+            let violencePreventionResult;
+
+            if (violencePreventionResultDiv.textContent &&
+                !isNaN(parseFloat(violencePreventionResultDiv.textContent)) &&
+                violencePreventionResultDiv.textContent !== '오류' &&
+                violencePreventionResultDiv.textContent !== '중복' &&
+                violencePreventionResultDiv.textContent !== '미입력') {
+                // 이미 수동으로 조정된 점수가 있으면 그것을 사용
+                violencePreventionResult = violencePreventionResultDiv.textContent;
+            } else {
+                // 자동 계산된 점수 사용
+                violencePreventionResult = violencePreventionResultDiv.textContent;
+            }
+            const lifeGuidanceTotalResultDiv = document.getElementById('lifeGuidanceTotalResult');
+
+            let lifeGuidanceTotal = 0;
+            let hasError = false;
+
+            // 담임 점수 확인
+            if (lifeGuidanceResult === '오류' || lifeGuidanceResult === '중복' || lifeGuidanceResult === '미입력') {
+                hasError = true;
+            } else {
+                const lifeScore = parseFloat(lifeGuidanceResult);
+                if (!isNaN(lifeScore)) {
+                    lifeGuidanceTotal += lifeScore;
+                } else {
+                    hasError = true;
+                }
+            }
+
+            // 교내외안전생활지도 점수 확인
+            if (violencePreventionResult === '오류' || violencePreventionResult === '중복' || violencePreventionResult === '미입력') {
+                hasError = true;
+            } else {
+                const violenceScore = parseFloat(violencePreventionResult);
+                if (!isNaN(violenceScore)) {
+                    lifeGuidanceTotal += violenceScore;
+                } else {
+                    hasError = true;
+                }
+            }
+
+            // 생활지도 총점 표시
+            if (hasError) {
+                lifeGuidanceTotalResultDiv.textContent = '오류';
+                lifeGuidanceTotalResultDiv.style.color = 'yellow';
+                lifeGuidanceTotalResultDiv.closest('td').style.backgroundColor = 'red';
+            } else {
+                lifeGuidanceTotalResultDiv.textContent = lifeGuidanceTotal.toFixed(2);
+                lifeGuidanceTotalResultDiv.style.color = 'black';
+                lifeGuidanceTotalResultDiv.closest('td').style.backgroundColor = 'transparent';
+            }
+
+            updateTotalScore();
+        }
+
+        function updateAssignedWorkTotalScore() {
+            // 업무추진실적 점수 가져오기 (수동 조정된 경우 그 값 사용)
+            const workPerformanceResultDiv = document.getElementById('workPerformanceResult');
+            let workPerformanceScore;
+
+            if (workPerformanceResultDiv.textContent &&
+                !isNaN(parseFloat(workPerformanceResultDiv.textContent)) &&
+                workPerformanceResultDiv.textContent !== '오류' &&
+                workPerformanceResultDiv.textContent !== '중복' &&
+                workPerformanceResultDiv.textContent !== '미입력') {
+                // 이미 수동으로 조정된 점수가 있으면 그것을 사용
+                workPerformanceScore = parseFloat(workPerformanceResultDiv.textContent);
+            } else {
+                // 자동 계산
+                workPerformanceScore = updateWorkPerformanceScore();
+            }
+
+            const subjectWorkScore = updateSubjectWorkScore();
+            const workDifficultyScore = updateWorkDifficultyScore();
+            const committeeWorkScore = updateCommitteeWorkScore();
+            const assignedWorkTotalResultDiv = document.getElementById('assignedWorkTotalResult');
+
+            const assignedWorkTotal = workPerformanceScore + subjectWorkScore + workDifficultyScore + committeeWorkScore;
+
+            if (assignedWorkTotal === 0) {
+                assignedWorkTotalResultDiv.textContent = '오류';
+                assignedWorkTotalResultDiv.style.color = 'yellow';
+                assignedWorkTotalResultDiv.closest('td').style.backgroundColor = 'red';
+            } else {
+                assignedWorkTotalResultDiv.textContent = assignedWorkTotal.toFixed(2);
+                assignedWorkTotalResultDiv.style.color = 'black';
+                assignedWorkTotalResultDiv.closest('td').style.backgroundColor = 'transparent';
+            }
+
+            updateTotalScore();
+        }
+
+        function updateGrandTotal() {
+            // 학습지도 총점
+            const learningTotalResult = document.getElementById('learningTotalResult').textContent;
+            // 생활지도 총점
+            const lifeGuidanceTotalResult = document.getElementById('lifeGuidanceTotalResult').textContent;
+            // 전문성개발 총점
+            const professionalDevTotalResult = document.getElementById('professionalDevTotalResult').textContent;
+            // 담당업무 총점
+            const assignedWorkTotalResult = document.getElementById('assignedWorkTotalResult').textContent;
+
+            let overallGrandTotal = 0;
+
+            // 전체 합계 (모든 요소별 점수 합계)
+            if (learningTotalResult !== '오류' && learningTotalResult !== '중복' && learningTotalResult !== '미입력') {
+                const learningScore = parseFloat(learningTotalResult);
+                if (!isNaN(learningScore)) {
+                    overallGrandTotal += learningScore;
+                }
+            }
+            if (lifeGuidanceTotalResult !== '오류' && lifeGuidanceTotalResult !== '중복' && lifeGuidanceTotalResult !== '미입력') {
+                const lifeScore = parseFloat(lifeGuidanceTotalResult);
+                if (!isNaN(lifeScore)) {
+                    overallGrandTotal += lifeScore;
+                }
+            }
+            if (professionalDevTotalResult !== '오류' && professionalDevTotalResult !== '중복' && professionalDevTotalResult !== '미입력') {
+                const profScore = parseFloat(professionalDevTotalResult);
+                if (!isNaN(profScore)) {
+                    overallGrandTotal += profScore;
+                }
+            }
+            if (assignedWorkTotalResult !== '오류' && assignedWorkTotalResult !== '중복' && assignedWorkTotalResult !== '미입력') {
+                const workScore = parseFloat(assignedWorkTotalResult);
+                if (!isNaN(workScore)) {
+                    overallGrandTotal += workScore;
+                }
+            }
+
+            // 합계 표시 업데이트
+            const grandTotalElement = document.getElementById('overallGrandTotal');
+            if (overallGrandTotal > 0) {
+                grandTotalElement.textContent = overallGrandTotal.toFixed(2);
+                grandTotalElement.style.color = '';
+                grandTotalElement.closest('td').style.backgroundColor = '';
+            } else {
+                grandTotalElement.textContent = '오류';
+                grandTotalElement.style.color = 'yellow';
+                grandTotalElement.closest('td').style.backgroundColor = 'red';
+            }
+        }
+
+        function updateTotalScore() {
+            updateGrandTotal();
+        }
+
+        // 체크박스 배경색 토글 함수
+        function toggleCheckboxBackground(checkbox) {
+            // 교육활동활성화 섹션 (label 구조)인지 확인
+            const parentLabel = checkbox.closest('label');
+            if (parentLabel) {
+                // label 구조인 경우 label에만 배경색 적용
+                if (checkbox.checked) {
+                    parentLabel.classList.add('bg-yellow-200', 'rounded', 'px-1');
+                } else {
+                    parentLabel.classList.remove('bg-yellow-200', 'rounded', 'px-1');
+                }
+            } else {
+                // 기존 div 구조인 경우
+                const parentDiv = checkbox.closest('div');
+                if (checkbox.dataset.hours) {
+                    // 수업시수도 다른 섹션들과 동일하게 글자만 배경색 적용
+                    if (checkbox.checked) {
+                        parentDiv.classList.add('bg-yellow-200', 'rounded', 'px-1');
+                    } else {
+                        parentDiv.classList.remove('bg-yellow-200', 'rounded', 'px-1');
+                    }
+                } else {
+                    // 다른 섹션들: 기본 방식 (글만 배경색)
+                    if (checkbox.checked) {
+                        parentDiv.classList.add('bg-yellow-200', 'rounded', 'px-1');
+                    } else {
+                        parentDiv.classList.remove('bg-yellow-200', 'rounded', 'px-1');
+                    }
+                }
+            }
+        }
+
+        // 모든 체크박스에 배경색 토글 이벤트 추가
+        function addBackgroundToggleListeners() {
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    toggleCheckboxBackground(checkbox);
+                });
+            });
+        }
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            // 수업시수 체크박스 이벤트 리스너 추가
+            document.querySelectorAll('input[data-group="1"]').forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    toggleCheckboxBackground(checkbox);
+                    updateLearningScore();
+                    updateLearningTotalScore();
+                });
+            });
+
+            // 다학년지도 체크박스 이벤트 리스너 추가
+            document.querySelectorAll('input[data-group="2"]').forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    toggleCheckboxBackground(checkbox);
+                    updateMultiGradeScore();
+                    updateLearningTotalScore();
+                });
+            });
+
+            // 수업공개 체크박스 이벤트 리스너 추가
+            document.querySelectorAll('input[data-group="3"]').forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    toggleCheckboxBackground(checkbox);
+                    updateClassOpenScore();
+                    updateLearningTotalScore();
+                });
+            });
+
+            // 담임 체크박스 이벤트 리스너 추가
+            document.querySelectorAll('input[data-group="4"]').forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    toggleCheckboxBackground(checkbox);
+                    updateLifeGuidanceScore();
+                    updateLifeGuidanceTotalScore();
+                });
+            });
+
+            // 교내외안전생활지도 체크박스 이벤트 리스너 추가
+            document.querySelectorAll('input[data-group="5"]').forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    toggleCheckboxBackground(checkbox);
+                    updateViolencePreventionScore();
+                    updateLifeGuidanceTotalScore();
+                });
+            });
+
+            // 전문성개발 체크박스 이벤트 리스너 추가
+            document.querySelectorAll('input[data-group="6"]').forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    toggleCheckboxBackground(checkbox);
+                    updateProfessionalDevScore();
+                    updateTotalScore();
+                });
+            });
+
+            // 업무추진실적 체크박스 이벤트 리스너 추가
+            document.querySelectorAll('input[data-group="7"]').forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    toggleCheckboxBackground(checkbox);
+                    updateAssignedWorkTotalScore();
+                });
+            });
+
+            // 교과업무 체크박스 이벤트 리스너 추가
+            document.querySelectorAll('input[data-group="8"]').forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    toggleCheckboxBackground(checkbox);
+                    updateAssignedWorkTotalScore();
+                });
+            });
+
+            // 업무곤란도 체크박스 이벤트 리스너 추가
+            document.querySelectorAll('input[data-group="9"]').forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    toggleCheckboxBackground(checkbox);
+                    updateAssignedWorkTotalScore();
+                });
+            });
+
+            // 교육활동 활성화 체크박스 이벤트 리스너 추가
+            document.querySelectorAll('input[data-group="9_edu"]').forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    toggleCheckboxBackground(checkbox);
+                    updateAssignedWorkTotalScore();
+                });
+            });
+
+            // 각종위원회활동 체크박스 이벤트 리스너 추가
+            document.querySelectorAll('input[data-group="10"]').forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    toggleCheckboxBackground(checkbox);
+                    updateAssignedWorkTotalScore();
+                });
+            });
+
+            updateLearningScore();
+            updateMultiGradeScore();
+            updateClassOpenScore();
+            updateLearningTotalScore();
+            updateLifeGuidanceScore();
+            updateViolencePreventionScore();
+            updateLifeGuidanceTotalScore();
+            updateProfessionalDevScore();
+            updateAssignedWorkTotalScore();
+        });
+    </script>
+</body>
+</html>
