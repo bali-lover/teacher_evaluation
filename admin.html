@@ -1009,14 +1009,20 @@
             try {
                 const snapshot = await firebase.database().ref('admin/dataPasswordHash').once('value');
                 const savedPasswordHash = snapshot.val();
+                console.log('Firebase에서 가져온 비밀번호 해시:', savedPasswordHash);
                 if (savedPasswordHash) {
                     correctPasswordHash = savedPasswordHash;
+                    console.log('저장된 비밀번호 해시를 사용합니다.');
+                } else {
+                    console.log('저장된 비밀번호가 없어 기본 비밀번호를 사용합니다.');
                 }
             } catch (error) {
-                console.log('저장된 데이터 비밀번호가 없어 기본 비밀번호를 사용합니다.');
+                console.log('저장된 데이터 비밀번호가 없어 기본 비밀번호를 사용합니다.', error);
             }
 
             const inputPasswordHash = await hashPassword(password);
+            console.log('입력된 비밀번호 해시:', inputPasswordHash);
+            console.log('비교할 정답 해시:', correctPasswordHash);
 
             if (inputPasswordHash === correctPasswordHash) {
                 document.getElementById('dataPasswordOverlay').classList.add('hidden');
@@ -1057,7 +1063,7 @@
         // 데이터 목록 비밀번호 설정 모달 표시
         function showDataPasswordSettings() {
             document.getElementById('dataPasswordSettingsOverlay').classList.remove('hidden');
-            document.getElementById('newDataPasswordInput').focus();
+            document.getElementById('currentDataPasswordInput').focus();
         }
 
         // 데이터 목록 비밀번호 설정 모달 숨김
@@ -1126,7 +1132,15 @@
 
                 // 새 비밀번호 저장 (Firebase)
                 const newPasswordHash = await hashPassword(newPassword);
+                console.log('새 비밀번호 해시:', newPasswordHash);
+
                 await firebase.database().ref('admin/dataPasswordHash').set(newPasswordHash);
+                console.log('Firebase에 새 비밀번호 해시 저장 완료');
+
+                // 저장 확인
+                const verifySnapshot = await firebase.database().ref('admin/dataPasswordHash').once('value');
+                const savedHash = verifySnapshot.val();
+                console.log('저장 확인 해시:', savedHash);
 
                 successDiv.textContent = '비밀번호가 성공적으로 변경되었습니다. (Firebase에 저장됨)';
                 successDiv.classList.remove('hidden');
