@@ -8,6 +8,8 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+    <!-- html2canvas for screenshot -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -221,61 +223,6 @@
             transition: width 0.3s ease;
         }
 
-        /* 프린트 스타일 */
-        @media print {
-            body {
-                margin: 0;
-                padding: 10px;
-                font-size: 8px !important;
-            }
-
-            .container {
-                max-width: none !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-
-            .header {
-                margin-bottom: 10px !important;
-            }
-
-            .header h1 {
-                font-size: 14px !important;
-                margin: 5px 0 !important;
-            }
-
-            .header .grid {
-                font-size: 8px !important;
-                gap: 5px !important;
-                margin-top: 5px !important;
-            }
-
-            .evaluation-form table {
-                font-size: 6px !important;
-            }
-
-            .evaluation-form th,
-            .evaluation-form td {
-                padding: 2px !important;
-                line-height: 1.2 !important;
-            }
-
-            .text-xs {
-                font-size: 5px !important;
-            }
-
-            /* 1페이지에 맞추기 위한 스케일 조정 */
-            .evaluation-form {
-                transform: scale(0.7);
-                transform-origin: top left;
-                width: 142.85%;
-            }
-
-            /* 프린트 버튼 숨기기 */
-            .print-button {
-                display: none !important;
-            }
-        }
 
 
     </style>
@@ -292,8 +239,8 @@
                     <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm" onclick="showFirebaseSettings()">
                         ⚙️ Firebase 설정
                     </button>
-                    <button class="print-button bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" onclick="window.print()">
-                        📄 PDF 저장
+                    <button class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700" onclick="captureScreenshot()">
+                        📸 스크린샷 저장
                     </button>
                 </div>
             </div>
@@ -1343,11 +1290,17 @@
                 return;
             }
 
-            // 점수 계산 확인 (모든 체크박스가 선택되었는지 확인)
-            const overallTotal = parseFloat(document.getElementById('overallGrandTotal').textContent) || 0;
+            // 점수 계산 확인 - 총합계에 오류가 있으면 제출 불가
+            const grandTotalText = document.getElementById('overallGrandTotal').textContent;
 
-            if (overallTotal === 0 || document.getElementById('overallGrandTotal').textContent === '오류') {
-                alert('평가 항목을 모두 완료해주세요.');
+            if (grandTotalText === '오류' || grandTotalText === '중복' || grandTotalText === '미입력') {
+                alert('❌ 평가 항목에 오류가 있습니다.\n\n다음 사항을 확인해주세요:\n• 모든 항목이 체크되었는지 확인\n• 중복 체크된 항목이 없는지 확인\n• 오류 표시된 항목을 수정해주세요');
+                return;
+            }
+
+            const overallTotal = parseFloat(grandTotalText);
+            if (isNaN(overallTotal) || overallTotal <= 0) {
+                alert('평가 점수가 올바르지 않습니다. 모든 항목을 다시 확인해주세요.');
                 return;
             }
 
@@ -1990,49 +1943,81 @@
             // 담당업무 총점
             const assignedWorkTotalResult = document.getElementById('assignedWorkTotalResult').textContent;
 
-            let overallGrandTotal = 0;
-
-            // 전체 합계 (모든 요소별 점수 합계)
-            if (learningTotalResult !== '오류' && learningTotalResult !== '중복' && learningTotalResult !== '미입력') {
-                const learningScore = parseFloat(learningTotalResult);
-                if (!isNaN(learningScore)) {
-                    overallGrandTotal += learningScore;
-                }
-            }
-            if (lifeGuidanceTotalResult !== '오류' && lifeGuidanceTotalResult !== '중복' && lifeGuidanceTotalResult !== '미입력') {
-                const lifeScore = parseFloat(lifeGuidanceTotalResult);
-                if (!isNaN(lifeScore)) {
-                    overallGrandTotal += lifeScore;
-                }
-            }
-            if (professionalDevTotalResult !== '오류' && professionalDevTotalResult !== '중복' && professionalDevTotalResult !== '미입력') {
-                const profScore = parseFloat(professionalDevTotalResult);
-                if (!isNaN(profScore)) {
-                    overallGrandTotal += profScore;
-                }
-            }
-            if (assignedWorkTotalResult !== '오류' && assignedWorkTotalResult !== '중복' && assignedWorkTotalResult !== '미입력') {
-                const workScore = parseFloat(assignedWorkTotalResult);
-                if (!isNaN(workScore)) {
-                    overallGrandTotal += workScore;
-                }
-            }
-
-            // 합계 표시 업데이트
             const grandTotalElement = document.getElementById('overallGrandTotal');
-            if (overallGrandTotal > 0) {
-                grandTotalElement.textContent = overallGrandTotal.toFixed(2);
-                grandTotalElement.style.color = '';
-                grandTotalElement.closest('td').style.backgroundColor = '';
-            } else {
+            let overallGrandTotal = 0;
+            let hasError = false;
+
+            // 각 영역별 오류 체크
+            const sections = [
+                learningTotalResult,
+                lifeGuidanceTotalResult,
+                professionalDevTotalResult,
+                assignedWorkTotalResult
+            ];
+
+            // 하나라도 오류가 있으면 전체 합계도 오류 표시
+            for (let result of sections) {
+                if (result === '오류' || result === '중복' || result === '미입력') {
+                    hasError = true;
+                    break;
+                }
+            }
+
+            if (hasError) {
+                // 오류가 있으면 합계도 오류 표시
                 grandTotalElement.textContent = '오류';
                 grandTotalElement.style.color = 'yellow';
                 grandTotalElement.closest('td').style.backgroundColor = 'red';
+                updateSubmitButtonState(true); // 버튼 비활성화
+            } else {
+                // 모든 영역이 정상이면 합계 계산
+                const learningScore = parseFloat(learningTotalResult) || 0;
+                const lifeGuidanceScore = parseFloat(lifeGuidanceTotalResult) || 0;
+                const professionalDevScore = parseFloat(professionalDevTotalResult) || 0;
+                const assignedWorkScore = parseFloat(assignedWorkTotalResult) || 0;
+
+                overallGrandTotal = learningScore + lifeGuidanceScore + professionalDevScore + assignedWorkScore;
+
+                if (overallGrandTotal > 0) {
+                    grandTotalElement.textContent = overallGrandTotal.toFixed(2);
+                    grandTotalElement.style.color = 'black';
+                    grandTotalElement.closest('td').style.backgroundColor = 'transparent';
+                    updateSubmitButtonState(false); // 버튼 활성화
+                } else {
+                    grandTotalElement.textContent = '오류';
+                    grandTotalElement.style.color = 'yellow';
+                    grandTotalElement.closest('td').style.backgroundColor = 'red';
+                    updateSubmitButtonState(true); // 버튼 비활성화
+                }
             }
         }
 
         function updateTotalScore() {
             updateGrandTotal();
+        }
+
+        // 제출 버튼 상태 업데이트 함수
+        function updateSubmitButtonState(hasError) {
+            const submitBtn = document.getElementById('submitBtn');
+            if (!submitBtn) return;
+
+            if (hasError) {
+                // 오류가 있을 때 - 버튼 비활성화 및 스타일 변경
+                submitBtn.disabled = true;
+                submitBtn.style.backgroundColor = '#6b7280'; // 회색
+                submitBtn.style.cursor = 'not-allowed';
+                submitBtn.style.opacity = '0.6';
+                submitBtn.innerHTML = '❌ 평가 항목을 확인하세요';
+                submitBtn.title = '모든 평가 항목을 올바르게 완료해야 제출할 수 있습니다.';
+            } else {
+                // 정상일 때 - 버튼 활성화
+                submitBtn.disabled = false;
+                submitBtn.style.backgroundColor = '#16a34a'; // 초록색
+                submitBtn.style.cursor = 'pointer';
+                submitBtn.style.opacity = '1';
+                submitBtn.innerHTML = '📤 평가 제출하기';
+                submitBtn.title = '평가를 제출합니다.';
+            }
         }
 
         // 체크박스 배경색 토글 함수
@@ -2181,7 +2166,59 @@
             updateLifeGuidanceTotalScore();
             updateProfessionalDevScore();
             updateAssignedWorkTotalScore();
+
+            // 초기 제출 버튼 상태 설정 (처음에는 비활성화)
+            updateSubmitButtonState(true);
         });
+
+        // 스크린샷 캡처 함수
+        function captureScreenshot() {
+            // 버튼들을 임시로 숨기기
+            const buttons = document.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.style.visibility = 'hidden';
+            });
+
+            // 모달들도 숨기기
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                modal.style.display = 'none';
+            });
+
+            // 교사 정보 가져오기
+            const teacherName = document.getElementById('teacherName').value || '이름';
+            const departmentSelect = document.getElementById('teacherDepartment');
+            const department = departmentSelect.value ? departmentSelect.selectedOptions[0].text : '부서';
+
+            // html2canvas로 스크린샷 캡처
+            html2canvas(document.body, {
+                scale: 2, // 고화질을 위한 스케일 설정
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#f8fafc',
+                width: window.innerWidth,
+                height: document.body.scrollHeight
+            }).then(canvas => {
+                // 버튼들 다시 보이기
+                buttons.forEach(btn => {
+                    btn.style.visibility = 'visible';
+                });
+
+                // 캔버스를 이미지로 변환하여 다운로드
+                const link = document.createElement('a');
+                link.download = `2025 다면평가_${department}_${teacherName}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }).catch(error => {
+                // 에러 발생 시 버튼들 복구
+                buttons.forEach(btn => {
+                    btn.style.visibility = 'visible';
+                });
+                console.error('스크린샷 캡처 중 오류 발생:', error);
+                alert('스크린샷 캡처 중 오류가 발생했습니다.');
+            });
+        }
+
     </script>
 </body>
 </html>
