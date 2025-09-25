@@ -381,6 +381,7 @@
                                      onclick="openScoreModal('learning')"
                                      style="cursor: pointer; min-height: 20px;"
                                      title="클릭하여 미근무월수 감점 적용">오류</div>
+                                <div id="learningAdjustmentInfo" class="text-xs text-gray-600 mt-1" style="display: none;"></div>
                             </td>
                             <td class="border border-gray-400 p-2 text-center font-bold" rowspan="3">
                                 <div id="learningTotalResult">오류</div>
@@ -470,6 +471,7 @@
                                      onclick="openScoreModal('lifeGuidance')"
                                      style="cursor: pointer; min-height: 20px;"
                                      title="클릭하여 미근무월수 감점 적용">오류</div>
+                                <div id="lifeGuidanceAdjustmentInfo" class="text-xs text-gray-600 mt-1" style="display: none;"></div>
                             </td>
                             <td class="border border-gray-400 p-2 text-center font-bold" rowspan="2">
                                 <div id="lifeGuidanceTotalResult">오류</div>
@@ -508,6 +510,7 @@
                                      onclick="openScoreModal('violencePrevention')"
                                      style="cursor: pointer; min-height: 20px;"
                                      title="클릭하여 도서관지도 추가점수 및 미근무월수 감점 적용">오류</div>
+                                <div id="violencePreventionAdjustmentInfo" class="text-xs text-gray-600 mt-1" style="display: none;"></div>
                             </td>
                         </tr>
                         <tr>
@@ -573,6 +576,7 @@
                                      onclick="openScoreModal('workPerformance')"
                                      style="cursor: pointer; min-height: 20px;"
                                      title="클릭하여 미근무월수 감점 적용">오류</div>
+                                <div id="workPerformanceAdjustmentInfo" class="text-xs text-gray-600 mt-1" style="display: none;"></div>
                             </td>
                             <td class="border border-gray-400 p-2 text-center font-bold" rowspan="4">
                                 <div id="assignedWorkTotalResult">오류</div>
@@ -1075,12 +1079,18 @@
         // 점수 조정 적용
         function applyScoreAdjustment() {
             const finalScore = parseFloat(document.getElementById('finalScore').textContent);
+            const baseScore = parseFloat(document.getElementById('currentScore').textContent);
+            const absentMonths = parseInt(document.getElementById('absentMonths').value) || 0;
 
             if (currentScoreType === 'workPerformance') {
                 const resultDiv = document.getElementById('workPerformanceResult');
                 resultDiv.textContent = finalScore.toFixed(2);
                 resultDiv.style.color = 'black';
                 resultDiv.closest('td').style.backgroundColor = 'transparent';
+
+                // 조정 내역 표시
+                updateAdjustmentInfo('workPerformance', baseScore, finalScore, absentMonths, false);
+
                 // 총점 재계산
                 updateAssignedWorkTotalScore();
             } else if (currentScoreType === 'violencePrevention') {
@@ -1088,6 +1098,11 @@
                 resultDiv.textContent = finalScore.toFixed(2);
                 resultDiv.style.color = 'black';
                 resultDiv.closest('td').style.backgroundColor = 'transparent';
+
+                // 조정 내역 표시
+                const libraryGuide = document.getElementById('libraryGuide').checked;
+                updateAdjustmentInfo('violencePrevention', baseScore, finalScore, absentMonths, libraryGuide);
+
                 // 총점 재계산
                 updateLifeGuidanceTotalScore();
             } else if (currentScoreType === 'lifeGuidance') {
@@ -1095,6 +1110,10 @@
                 resultDiv.textContent = finalScore.toFixed(2);
                 resultDiv.style.color = 'black';
                 resultDiv.closest('td').style.backgroundColor = 'transparent';
+
+                // 조정 내역 표시
+                updateAdjustmentInfo('lifeGuidance', baseScore, finalScore, absentMonths, false);
+
                 // 총점 재계산
                 updateLifeGuidanceTotalScore();
             } else if (currentScoreType === 'learning') {
@@ -1102,6 +1121,13 @@
                 resultDiv.textContent = finalScore.toFixed(2);
                 resultDiv.style.color = 'black';
                 resultDiv.closest('td').style.backgroundColor = 'transparent';
+
+                // 조정 내역 표시 - 수업시수의 경우 학기별 시수 정보도 포함
+                const differentSemesters = document.getElementById('differentSemesters')?.checked || false;
+                const semester1Hours = document.getElementById('semester1Hours')?.value || '';
+                const semester2Hours = document.getElementById('semester2Hours')?.value || '';
+                updateAdjustmentInfo('learning', baseScore, finalScore, absentMonths, false, differentSemesters, semester1Hours, semester2Hours);
+
                 // 총점 재계산
                 updateLearningTotalScore();
             }
@@ -1994,6 +2020,47 @@
 
         function updateTotalScore() {
             updateGrandTotal();
+        }
+
+        // 조정 내역 표시 함수
+        function updateAdjustmentInfo(scoreType, baseScore, finalScore, absentMonths, libraryGuide = false, differentSemesters = false, semester1Hours = '', semester2Hours = '') {
+            const infoElementId = scoreType + 'AdjustmentInfo';
+            const infoElement = document.getElementById(infoElementId);
+
+            if (!infoElement) return;
+
+            // 조정이 있었는지 확인 (기본 점수와 최종 점수가 다른 경우)
+            if (Math.abs(baseScore - finalScore) < 0.01 && !libraryGuide && !differentSemesters && absentMonths === 0) {
+                // 조정이 없으면 정보 숨김
+                infoElement.style.display = 'none';
+                return;
+            }
+
+            // 조정 내역 생성
+            let adjustmentText = [];
+
+            // 각 항목별 간단한 조정 내역
+            if (scoreType === 'learning' && differentSemesters) {
+                adjustmentText.push('시수다름');
+            }
+
+            if (libraryGuide && scoreType === 'violencePrevention') {
+                adjustmentText.push('도서관지도');
+            }
+
+            if (absentMonths > 0) {
+                adjustmentText.push(`미근무 ${absentMonths}개월`);
+            }
+
+            // 정보 표시
+            if (adjustmentText.length > 0) {
+                infoElement.innerHTML = adjustmentText.join(', ');
+                infoElement.style.display = 'block';
+                infoElement.style.color = '#2563eb'; // 파란색으로 강조
+                infoElement.style.fontWeight = '500';
+            } else {
+                infoElement.style.display = 'none';
+            }
         }
 
         // 제출 버튼 상태 업데이트 함수
