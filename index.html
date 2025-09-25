@@ -970,6 +970,23 @@
             const libraryGuideSection = document.getElementById('libraryGuideSection');
             const libraryGuideCheckbox = document.getElementById('libraryGuide');
 
+            // 모든 섹션 초기화
+            libraryGuideSection.style.display = 'none';
+            libraryGuideCheckbox.checked = false;
+
+            const semesterHoursSection = document.getElementById('semesterHoursSection');
+            if (semesterHoursSection) {
+                semesterHoursSection.style.display = 'none';
+                const differentSemestersCheckbox = document.getElementById('differentSemesters');
+                const semester1Input = document.getElementById('semester1Hours');
+                const semester2Input = document.getElementById('semester2Hours');
+                if (differentSemestersCheckbox) differentSemestersCheckbox.checked = false;
+                if (document.getElementById('semesterInputs')) document.getElementById('semesterInputs').style.display = 'none';
+                if (semester1Input) semester1Input.value = '';
+                if (semester2Input) semester2Input.value = '';
+                if (document.getElementById('averageHours')) document.getElementById('averageHours').textContent = '0';
+            }
+
             // 현재 체크박스 상태에 따른 기본 점수 계산
             let baseScore = 0;
             if (scoreType === 'workPerformance') {
@@ -978,7 +995,6 @@
                     const selectedType = checkboxes[0].dataset.type;
                     baseScore = (selectedType === 'department_head') ? 10 : 9;
                 }
-                libraryGuideSection.style.display = 'none';
             } else if (scoreType === 'violencePrevention') {
                 const checkboxes = document.querySelectorAll('input[data-group="5"]:checked');
                 if (checkboxes.length === 1) {
@@ -997,7 +1013,6 @@
                     }
                 }
                 libraryGuideSection.style.display = 'block';
-                libraryGuideCheckbox.checked = false;
             } else if (scoreType === 'lifeGuidance') {
                 const checkboxes = document.querySelectorAll('input[data-group="4"]:checked');
                 if (checkboxes.length === 1) {
@@ -1014,7 +1029,6 @@
                         baseScore = parseFloat(currentDisplayedScore);
                     }
                 }
-                libraryGuideSection.style.display = 'none';
             } else if (scoreType === 'learning') {
                 const checkboxes = document.querySelectorAll('input[data-group="1"]:checked');
                 if (checkboxes.length === 1) {
@@ -1031,20 +1045,11 @@
                         baseScore = parseFloat(currentDisplayedScore);
                     }
                 }
-                libraryGuideSection.style.display = 'none';
 
                 // 수업시수의 경우 학기별 시수 섹션 표시
-                const semesterHoursSection = document.getElementById('semesterHoursSection');
-                const differentSemestersCheckbox = document.getElementById('differentSemesters');
-                const semester1Input = document.getElementById('semester1Hours');
-                const semester2Input = document.getElementById('semester2Hours');
-
-                semesterHoursSection.style.display = 'block';
-                differentSemestersCheckbox.checked = false;
-                document.getElementById('semesterInputs').style.display = 'none';
-                semester1Input.value = '';
-                semester2Input.value = '';
-                document.getElementById('averageHours').textContent = '0';
+                if (semesterHoursSection) {
+                    semesterHoursSection.style.display = 'block';
+                }
             }
 
             // 체크박스가 선택되지 않은 경우 현재 결과에서 점수 추출 시도
