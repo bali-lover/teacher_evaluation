@@ -243,7 +243,7 @@
         #learningResult, #multiGradeResult, #classOpenResult,
         #lifeGuidanceResult, #violencePreventionResult, #professionalDevResult,
         #workPerformanceResult, #subjectWorkResult, #workDifficultyResult, #committeeWorkResult,
-        #learningTotalResult, #lifeGuidanceTotalResult, #assignedWorkTotalResult, #overallGrandTotal {
+        #learningTotalResult, #lifeGuidanceTotalResult, #professionalDevTotalResult, #assignedWorkTotalResult, #overallGrandTotal {
             font-size: 20px !important;
             font-weight: bold !important;
         }
@@ -414,7 +414,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td class="border border-gray-400 p-2 text-center font-medium bg-blue-50">다학년지도</td>
+                            <td class="border border-gray-400 p-2 text-center font-medium bg-blue-50">다학년<br>지도</td>
                             <td class="border border-gray-400 p-2 text-left" colspan="3">
                                 <div class="border-b border-gray-300 pb-1 mb-1">
                                     <input type="checkbox" class="mr-2" data-group="2" data-type="both">두학기 해당
@@ -432,7 +432,7 @@
                                 <div>4</div>
                             </td>
                             <td class="border border-gray-400 p-2 text-left text-xs align-middle">
-                                <strong>* 동아리, 스포츠, 자유학기는 다학년에 포함시키지 않음</strong><br>
+                                <strong>* 동아리,스포츠,자유학기는 다학년에 포함시키지 않음</strong><br>
                                 <strong>* 순회지도 포함</strong><br>
                                 <strong>* 한 학기만 해당한 경우 4.5점 부여</strong><br>
                                 <strong>* 학년 수업을 A, B로 나누는 교과는 제외함</strong>
@@ -540,7 +540,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td class="border border-gray-400 p-2 text-center font-medium bg-teal-50">③<br>전문성개발<br>(10점)</td>
+                            <td class="border border-gray-400 p-2 text-center font-medium bg-teal-50">③<br>전문성<br>개발<br>(10점)</td>
                             <td class="border border-gray-400 p-2 text-center font-medium bg-teal-50">개인<br>연수<br>시간<br>(10점)</td>
                             <td class="border border-gray-400 p-2 text-left" colspan="3">
                                 <div class="border-b border-gray-300 pb-1 mb-1">
@@ -1009,10 +1009,10 @@
             } else if (scoreType === 'learning') {
                 const checkboxes = document.querySelectorAll('input[data-group="1"]:checked');
                 if (checkboxes.length === 1) {
-                    // 수업시수는 data-hours 속성에서 점수를 가져옴
+                    // 수업시수는 data-hours 속성에서 점수를 계산함
                     const hours = parseFloat(checkboxes[0].dataset.hours);
                     if (!isNaN(hours)) {
-                        baseScore = hours;
+                        baseScore = getScoreFromHours(hours);
                     }
                 } else {
                     // 체크박스가 선택되지 않은 경우 현재 표시된 점수 사용 (있다면)
