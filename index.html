@@ -837,7 +837,7 @@
 
             <div class="mb-4">
                 <label class="block font-weight-600 color-#374151 margin-bottom-8px">감점 계산:</label>
-                <div class="text-sm text-gray-600 mb-2">감점 = 미근무 월수 × 0.1</div>
+                <div id="deductionText" class="text-sm text-gray-600 mb-2">감점 = 미근무 월수 × 0.1</div>
                 <div id="deductionAmount" class="text-lg font-medium text-red-600">0</div>
             </div>
 
@@ -1073,7 +1073,7 @@
             const deductionText = (currentScoreType === 'violencePrevention' || currentScoreType === 'learning')
                 ? '감점 = 미근무 월수 × 0.2'
                 : '감점 = 미근무 월수 × 0.1';
-            document.querySelector('.text-gray-600').textContent = deductionText;
+            document.getElementById('deductionText').textContent = deductionText;
         }
 
         // 점수 조정 적용
