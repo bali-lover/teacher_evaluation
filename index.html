@@ -223,6 +223,32 @@
             transition: width 0.3s ease;
         }
 
+        /* 테이블 컬럼 너비 조정 */
+        td:nth-child(1) { width: 7% !important; }  /* 평가요소 */
+        td:nth-child(2) { width: 7% !important; }  /* 평가기준 */
+        td:nth-child(3) { width: 10% !important; }   /* 시수 */
+        td:nth-child(4) { width: 10% !important; }   /* 점수 */
+        td:nth-child(5) { width: 10% !important; }   /* 시수 */
+        td:nth-child(6) { width: 10% !important; }   /* 점수 */
+        td:nth-child(7) { width: 26% !important; }  /* 평가내용 세부설명 */
+        td:nth-child(8) { width: 10% !important; }  /* 기준별 */
+        td:nth-child(9) { width: 10% !important; }  /* 요소별 */
+
+        /* 교육활동 활성화 표 컬럼 너비 조정 */
+        .education-table td:nth-child(1) { width: 15% !important; }  /* 구분 */
+        .education-table td:nth-child(2) { width: 67% !important; }  /* 내용 */
+        .education-table td:nth-child(3) { width: 18% !important; }  /* 점수 */
+
+        /* 해당영역점수 칸 글자 크기 조정 */
+        #learningResult, #multiGradeResult, #classOpenResult,
+        #lifeGuidanceResult, #violencePreventionResult, #professionalDevResult,
+        #workPerformanceResult, #subjectWorkResult, #workDifficultyResult, #committeeWorkResult,
+        #learningTotalResult, #lifeGuidanceTotalResult, #assignedWorkTotalResult, #overallGrandTotal {
+            font-size: 20px !important;
+            font-weight: bold !important;
+        }
+
+
 
 
     </style>
@@ -283,7 +309,7 @@
                             <th class="border border-gray-400 p-2 text-center font-bold" rowspan="2">평가기준</th>
                             <th class="border border-gray-400 p-2 text-center font-bold" colspan="4">점수</th>
                             <th class="border border-gray-400 p-2 text-center font-bold" rowspan="2">평가내용 세부설명</th>
-                            <th class="border border-gray-400 p-1 text-center font-bold text-xs" colspan="2">해당영역점수</th>
+                            <th class="border border-gray-400 p-1 text-center font-bold text-base" colspan="2">해당영역점수</th>
                         </tr>
                         <tr class="bg-gray-50">
                             <th class="border border-gray-400 p-1 text-center font-bold text-xs" style="width: 7%">시수</th>
@@ -298,7 +324,7 @@
                         <tr>
                             <td class="border border-gray-400 p-2 text-center font-medium bg-blue-50" rowspan="3">①<br>학습지도<br>(30점)</td>
                             <td class="border border-gray-400 p-2 text-center font-medium bg-blue-50">수업시수</td>
-                            <td class="border border-gray-400 p-2 text-left text-xs align-middle" colspan="1">
+                            <td class="border border-gray-400 p-2 text-left text-base align-middle" colspan="1">
                                 <div class="border-b border-gray-300 pb-1 mb-1">
                                     <input type="checkbox" class="mr-2" data-group="1" data-hours="24">24
                                 </div>
@@ -321,7 +347,7 @@
                                     <input type="checkbox" class="mr-2" data-group="1" data-hours="18">18
                                 </div>
                             </td>
-                            <td class="border border-gray-400 p-2 text-center text-xs align-middle">
+                            <td class="border border-gray-400 p-2 text-center text-base align-middle">
                                 <div class="border-b border-gray-300 pb-1 mb-1">20</div>
                                 <div class="border-b border-gray-300 pb-1 mb-1">19.5</div>
                                 <div class="border-b border-gray-300 pb-1 mb-1">19</div>
@@ -330,7 +356,7 @@
                                 <div class="border-b border-gray-300 pb-1 mb-1">17.5</div>
                                 <div>17</div>
                             </td>
-                            <td class="border border-gray-400 p-2 text-left text-xs align-middle">
+                            <td class="border border-gray-400 p-2 text-left text-base align-middle">
                                 <div class="border-b border-gray-300 pb-1 mb-1">
                                     <input type="checkbox" class="mr-2" data-group="1" data-hours="17">17
                                 </div>
@@ -353,7 +379,7 @@
                                     <input type="checkbox" class="mr-2" data-group="1" data-hours="11">11
                                 </div>
                             </td>
-                            <td class="border border-gray-400 p-2 text-center text-xs align-middle">
+                            <td class="border border-gray-400 p-2 text-center text-base align-middle">
                                 <div class="border-b border-gray-300 pb-1 mb-1">16.5</div>
                                 <div class="border-b border-gray-300 pb-1 mb-1">16</div>
                                 <div class="border-b border-gray-300 pb-1 mb-1">15.5</div>
@@ -381,7 +407,7 @@
                                      onclick="openScoreModal('learning')"
                                      style="cursor: pointer; min-height: 20px;"
                                      title="클릭하여 미근무월수 감점 적용">오류</div>
-                                <div id="learningAdjustmentInfo" class="text-xs text-gray-600 mt-1" style="display: none;"></div>
+                                <div id="learningAdjustmentInfo" class="text-base text-gray-600 mt-1" style="display: none;"></div>
                             </td>
                             <td class="border border-gray-400 p-2 text-center font-bold" rowspan="3">
                                 <div id="learningTotalResult">오류</div>
@@ -471,7 +497,7 @@
                                      onclick="openScoreModal('lifeGuidance')"
                                      style="cursor: pointer; min-height: 20px;"
                                      title="클릭하여 미근무월수 감점 적용">오류</div>
-                                <div id="lifeGuidanceAdjustmentInfo" class="text-xs text-gray-600 mt-1" style="display: none;"></div>
+                                <div id="lifeGuidanceAdjustmentInfo" class="text-base text-gray-600 mt-1" style="display: none;"></div>
                             </td>
                             <td class="border border-gray-400 p-2 text-center font-bold" rowspan="2">
                                 <div id="lifeGuidanceTotalResult">오류</div>
@@ -510,7 +536,7 @@
                                      onclick="openScoreModal('violencePrevention')"
                                      style="cursor: pointer; min-height: 20px;"
                                      title="클릭하여 도서관지도 추가점수 및 미근무월수 감점 적용">오류</div>
-                                <div id="violencePreventionAdjustmentInfo" class="text-xs text-gray-600 mt-1" style="display: none;"></div>
+                                <div id="violencePreventionAdjustmentInfo" class="text-base text-gray-600 mt-1" style="display: none;"></div>
                             </td>
                         </tr>
                         <tr>
@@ -576,7 +602,7 @@
                                      onclick="openScoreModal('workPerformance')"
                                      style="cursor: pointer; min-height: 20px;"
                                      title="클릭하여 미근무월수 감점 적용">오류</div>
-                                <div id="workPerformanceAdjustmentInfo" class="text-xs text-gray-600 mt-1" style="display: none;"></div>
+                                <div id="workPerformanceAdjustmentInfo" class="text-base text-gray-600 mt-1" style="display: none;"></div>
                             </td>
                             <td class="border border-gray-400 p-2 text-center font-bold" rowspan="4">
                                 <div id="assignedWorkTotalResult">오류</div>
@@ -627,7 +653,7 @@
                                 </div>
 
                                 <!-- 교육활동 활성화 표 -->
-                                <table class="w-full border-collapse">
+                                <table class="w-full border-collapse education-table">
                                     <tbody>
                                         <tr>
                                             <td class="border border-gray-300 p-1 text-center text-xs bg-blue-50 w-1/4">구분</td>
@@ -2095,8 +2121,12 @@
                 // label 구조인 경우 label에만 배경색 적용
                 if (checkbox.checked) {
                     parentLabel.classList.add('bg-yellow-200', 'rounded', 'px-1');
+                    parentLabel.style.fontSize = '16px';
+                    parentLabel.style.fontWeight = 'bold';
                 } else {
                     parentLabel.classList.remove('bg-yellow-200', 'rounded', 'px-1');
+                    parentLabel.style.fontSize = '';
+                    parentLabel.style.fontWeight = '';
                 }
             } else {
                 // 기존 div 구조인 경우
@@ -2105,15 +2135,23 @@
                     // 수업시수도 다른 섹션들과 동일하게 글자만 배경색 적용
                     if (checkbox.checked) {
                         parentDiv.classList.add('bg-yellow-200', 'rounded', 'px-1');
+                        parentDiv.style.fontSize = '16px';
+                        parentDiv.style.fontWeight = 'bold';
                     } else {
                         parentDiv.classList.remove('bg-yellow-200', 'rounded', 'px-1');
+                        parentDiv.style.fontSize = '';
+                        parentDiv.style.fontWeight = '';
                     }
                 } else {
                     // 다른 섹션들: 기본 방식 (글만 배경색)
                     if (checkbox.checked) {
                         parentDiv.classList.add('bg-yellow-200', 'rounded', 'px-1');
+                        parentDiv.style.fontSize = '20px';
+                        parentDiv.style.fontWeight = 'bold';
                     } else {
                         parentDiv.classList.remove('bg-yellow-200', 'rounded', 'px-1');
+                        parentDiv.style.fontSize = '';
+                        parentDiv.style.fontWeight = '';
                     }
                 }
             }
@@ -2251,6 +2289,7 @@
             modals.forEach(modal => {
                 modal.style.display = 'none';
             });
+
 
             // 교사 정보 가져오기
             const teacherName = document.getElementById('teacherName').value || '이름';
