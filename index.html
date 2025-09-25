@@ -1371,8 +1371,14 @@
             const teacherSubject = document.getElementById('teacherSubject').value.trim();
             const teacherDepartment = document.getElementById('teacherDepartment').value;
 
-            if (!teacherName || !teacherSubject || !teacherDepartment) {
-                alert('교사 정보를 모두 입력해주세요.');
+            // 교사 정보 누락 확인
+            let missingInfo = [];
+            if (!teacherName) missingInfo.push('성명');
+            if (!teacherSubject) missingInfo.push('발령교과');
+            if (!teacherDepartment) missingInfo.push('부서');
+
+            if (missingInfo.length > 0) {
+                alert(`❌ 필수 정보가 누락되었습니다.\n\n다음 정보를 입력해주세요:\n• ${missingInfo.join('\n• ')}\n\n모든 정보를 입력한 후 제출해주세요.`);
                 return;
             }
 
