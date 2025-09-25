@@ -262,11 +262,14 @@
                     <div id="connectionStatus" class="px-3 py-1 rounded text-sm font-medium">
                         🔴 연결 안됨
                     </div>
-                    <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm" onclick="showFirebaseSettings()">
+                    <button class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 text-sm" onclick="showFirebaseSettings()">
                         ⚙️ Firebase 설정
                     </button>
                     <button class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700" onclick="captureScreenshot()">
                         📸 스크린샷 저장
+                    </button>
+                    <button id="submitBtn" class="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700" onclick="submitEvaluation()">
+                        📤 평가 제출하기
                     </button>
                 </div>
             </div>
@@ -786,11 +789,6 @@
             </div>
 
 
-            <div class="text-center mt-8">
-                <button id="submitBtn" class="btn btn-success" onclick="submitEvaluation()">
-                    📤 평가 제출하기
-                </button>
-            </div>
         </div>
     </div>
 
@@ -883,6 +881,14 @@
         // 점수 조정 모달 관련 변수
         let currentScoreType = '';
 
+        // 각 항목별 조정사항 추적 객체
+        const adjustmentHistory = {
+            learning: { absentMonths: 0, libraryGuide: false, differentSemesters: false, semester1: 0, semester2: 0 },
+            lifeGuidance: { absentMonths: 0, libraryGuide: false, differentSemesters: false, semester1: 0, semester2: 0 },
+            violencePrevention: { absentMonths: 0, libraryGuide: false, differentSemesters: false, semester1: 0, semester2: 0 },
+            workPerformance: { absentMonths: 0, libraryGuide: false, differentSemesters: false, semester1: 0, semester2: 0 }
+        };
+
         // 시수에 따른 점수 계산 함수
         function getScoreFromHours(hours) {
             // 시수-점수 매핑 테이블 (현재 시수에 맞게 수정)
@@ -947,9 +953,15 @@
             const libraryGuideSection = document.getElementById('libraryGuideSection');
             const libraryGuideCheckbox = document.getElementById('libraryGuide');
 
-            // 모든 섹션 초기화
+            // 저장된 조정사항으로 모달 상태 복원
+            const savedAdjustment = adjustmentHistory[scoreType];
+
+            // 미근무월수 복원
+            absentMonthsInput.value = savedAdjustment.absentMonths;
+
+            // 도서관 지도 관련 섹션 초기화
             libraryGuideSection.style.display = 'none';
-            libraryGuideCheckbox.checked = false;
+            libraryGuideCheckbox.checked = savedAdjustment.libraryGuide;
 
             const semesterHoursSection = document.getElementById('semesterHoursSection');
             if (semesterHoursSection) {
@@ -957,11 +969,20 @@
                 const differentSemestersCheckbox = document.getElementById('differentSemesters');
                 const semester1Input = document.getElementById('semester1Hours');
                 const semester2Input = document.getElementById('semester2Hours');
-                if (differentSemestersCheckbox) differentSemestersCheckbox.checked = false;
-                if (document.getElementById('semesterInputs')) document.getElementById('semesterInputs').style.display = 'none';
-                if (semester1Input) semester1Input.value = '';
-                if (semester2Input) semester2Input.value = '';
-                if (document.getElementById('averageHours')) document.getElementById('averageHours').textContent = '0';
+                if (differentSemestersCheckbox) {
+                    differentSemestersCheckbox.checked = savedAdjustment.differentSemesters;
+                }
+                if (savedAdjustment.differentSemesters && document.getElementById('semesterInputs')) {
+                    document.getElementById('semesterInputs').style.display = 'block';
+                }
+                if (semester1Input) semester1Input.value = savedAdjustment.semester1 || '';
+                if (semester2Input) semester2Input.value = savedAdjustment.semester2 || '';
+                if (document.getElementById('averageHours')) {
+                    const avg = savedAdjustment.differentSemesters && savedAdjustment.semester1 && savedAdjustment.semester2
+                        ? (parseFloat(savedAdjustment.semester1) + parseFloat(savedAdjustment.semester2)) / 2
+                        : 0;
+                    document.getElementById('averageHours').textContent = avg.toFixed(1);
+                }
             }
 
             // 현재 체크박스 상태에 따른 기본 점수 계산
@@ -1049,7 +1070,6 @@
             }
 
             currentScoreDiv.textContent = baseScore;
-            absentMonthsInput.value = 0;
             updateScoreCalculation();
 
             modal.style.display = 'flex';
@@ -1107,6 +1127,20 @@
             const finalScore = parseFloat(document.getElementById('finalScore').textContent);
             const baseScore = parseFloat(document.getElementById('currentScore').textContent);
             const absentMonths = parseInt(document.getElementById('absentMonths').value) || 0;
+
+            // 현재 조정사항을 추적 객체에 저장
+            const libraryGuideCheckbox = document.getElementById('libraryGuide');
+            const differentSemestersCheckbox = document.getElementById('differentSemesters');
+            const semester1Input = document.getElementById('semester1Hours');
+            const semester2Input = document.getElementById('semester2Hours');
+
+            adjustmentHistory[currentScoreType] = {
+                absentMonths: absentMonths,
+                libraryGuide: libraryGuideCheckbox ? libraryGuideCheckbox.checked : false,
+                differentSemesters: differentSemestersCheckbox ? differentSemestersCheckbox.checked : false,
+                semester1: semester1Input ? parseFloat(semester1Input.value) || 0 : 0,
+                semester2: semester2Input ? parseFloat(semester2Input.value) || 0 : 0
+            };
 
             if (currentScoreType === 'workPerformance') {
                 const resultDiv = document.getElementById('workPerformanceResult');
@@ -1711,9 +1745,12 @@
                     default: score = 0;
                 }
             }
-            // 메인 항목이 선택되지 않았으면 기본 점수
+            // 메인 항목이 선택되지 않았으면 미입력 처리
             else {
-                score = 3.5;
+                resultDiv.textContent = '미입력';
+                resultDiv.style.color = 'red';
+                resultDiv.closest('td').style.backgroundColor = 'yellow';
+                return 0;
             }
 
             // 교육활동 활성화 추가 점수 계산 (메인과 독립적으로 작동)
@@ -1949,20 +1986,23 @@
         }
 
         function updateAssignedWorkTotalScore() {
-            // 업무추진실적 점수 가져오기 (수동 조정된 경우 그 값 사용)
-            const workPerformanceResultDiv = document.getElementById('workPerformanceResult');
-            let workPerformanceScore;
+            // 업무추진실적 점수는 항상 체크박스 상태를 먼저 확인
+            let workPerformanceScore = updateWorkPerformanceScore();
 
-            if (workPerformanceResultDiv.textContent &&
-                !isNaN(parseFloat(workPerformanceResultDiv.textContent)) &&
-                workPerformanceResultDiv.textContent !== '오류' &&
-                workPerformanceResultDiv.textContent !== '중복' &&
-                workPerformanceResultDiv.textContent !== '미입력') {
-                // 이미 수동으로 조정된 점수가 있으면 그것을 사용
-                workPerformanceScore = parseFloat(workPerformanceResultDiv.textContent);
-            } else {
-                // 자동 계산
-                workPerformanceScore = updateWorkPerformanceScore();
+            // 만약 수동 조정된 점수가 있다면 (모달에서 조정된 경우)
+            // 조정 내역이 표시되어 있는지 확인
+            const adjustmentInfo = document.getElementById('workPerformanceAdjustmentInfo');
+            const workPerformanceResultDiv = document.getElementById('workPerformanceResult');
+
+            if (adjustmentInfo && adjustmentInfo.style.display === 'block' && adjustmentInfo.innerHTML.trim() !== '') {
+                // 조정 내역이 있으면 현재 표시된 점수 사용 (모달에서 조정된 점수)
+                if (workPerformanceResultDiv.textContent &&
+                    !isNaN(parseFloat(workPerformanceResultDiv.textContent)) &&
+                    workPerformanceResultDiv.textContent !== '오류' &&
+                    workPerformanceResultDiv.textContent !== '중복' &&
+                    workPerformanceResultDiv.textContent !== '미입력') {
+                    workPerformanceScore = parseFloat(workPerformanceResultDiv.textContent);
+                }
             }
 
             const subjectWorkScore = updateSubjectWorkScore();
@@ -1970,13 +2010,22 @@
             const committeeWorkScore = updateCommitteeWorkScore();
             const assignedWorkTotalResultDiv = document.getElementById('assignedWorkTotalResult');
 
-            const assignedWorkTotal = workPerformanceScore + subjectWorkScore + workDifficultyScore + committeeWorkScore;
+            // 각 하위 항목의 상태 확인
+            const workPerformanceResult = document.getElementById('workPerformanceResult').textContent;
+            const subjectWorkResult = document.getElementById('subjectWorkResult').textContent;
+            const workDifficultyResult = document.getElementById('workDifficultyResult').textContent;
+            const committeeWorkResult = document.getElementById('committeeWorkResult').textContent;
 
-            if (assignedWorkTotal === 0) {
+            // 미입력이나 중복이 있는지 확인
+            const hasError = [workPerformanceResult, subjectWorkResult, workDifficultyResult, committeeWorkResult]
+                .some(result => result === '미입력' || result === '중복' || result === '오류');
+
+            if (hasError) {
                 assignedWorkTotalResultDiv.textContent = '오류';
                 assignedWorkTotalResultDiv.style.color = 'yellow';
                 assignedWorkTotalResultDiv.closest('td').style.backgroundColor = 'red';
             } else {
+                const assignedWorkTotal = workPerformanceScore + subjectWorkScore + workDifficultyScore + committeeWorkScore;
                 assignedWorkTotalResultDiv.textContent = assignedWorkTotal.toFixed(2);
                 assignedWorkTotalResultDiv.style.color = 'black';
                 assignedWorkTotalResultDiv.closest('td').style.backgroundColor = 'transparent';
@@ -2078,9 +2127,9 @@
                 adjustmentText.push(`미근무 ${absentMonths}개월`);
             }
 
-            // 정보 표시
+            // 정보 표시 - 각 항목을 새 줄로 분리
             if (adjustmentText.length > 0) {
-                infoElement.innerHTML = adjustmentText.join(', ');
+                infoElement.innerHTML = adjustmentText.join('<br>');
                 infoElement.style.display = 'block';
                 infoElement.style.color = '#2563eb'; // 파란색으로 강조
                 infoElement.style.fontWeight = '500';
@@ -2097,7 +2146,7 @@
             if (hasError) {
                 // 오류가 있을 때 - 버튼 비활성화 및 스타일 변경
                 submitBtn.disabled = true;
-                submitBtn.style.backgroundColor = '#6b7280'; // 회색
+                submitBtn.style.backgroundColor = '#059669'; // 에메랄드 그린 (비활성화)
                 submitBtn.style.cursor = 'not-allowed';
                 submitBtn.style.opacity = '0.6';
                 submitBtn.innerHTML = '❌ 평가 항목을 확인하세요';
@@ -2105,7 +2154,7 @@
             } else {
                 // 정상일 때 - 버튼 활성화
                 submitBtn.disabled = false;
-                submitBtn.style.backgroundColor = '#16a34a'; // 초록색
+                submitBtn.style.backgroundColor = '#047857'; // 진한 에메랄드 그린 (활성화)
                 submitBtn.style.cursor = 'pointer';
                 submitBtn.style.opacity = '1';
                 submitBtn.innerHTML = '📤 평가 제출하기';
