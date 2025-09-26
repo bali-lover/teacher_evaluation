@@ -609,25 +609,25 @@
                     </td>
                     <td>${evaluation.teacherSubject || '미입력'}</td>
                     <td><span class="department-badge">${evaluation.teacherDepartment || '미정'}</span></td>
-                    <td><span class="score-badge">${evaluation.totalScore.toFixed(1)}</span></td>
+                    <td><span class="score-badge">${Math.round(evaluation.totalScore * 1000) / 1000}</span></td>
 
                     <!-- 학습지도 세부 점수 -->
-                    <td class="text-sm">${(evaluation.learningResult || 0).toFixed(1)}</td>
-                    <td class="text-sm">${(evaluation.multiGradeResult || 0).toFixed(1)}</td>
-                    <td class="text-sm">${(evaluation.classOpenResult || 0).toFixed(1)}</td>
+                    <td class="text-sm">${Math.round((evaluation.learningResult || 0) * 1000) / 1000}</td>
+                    <td class="text-sm">${Math.round((evaluation.multiGradeResult || 0) * 1000) / 1000}</td>
+                    <td class="text-sm">${Math.round((evaluation.classOpenResult || 0) * 1000) / 1000}</td>
 
                     <!-- 생활지도 세부 점수 -->
-                    <td class="text-sm">${(evaluation.lifeGuidanceResult || 0).toFixed(1)}</td>
-                    <td class="text-sm">${(evaluation.violencePreventionResult || 0).toFixed(1)}</td>
+                    <td class="text-sm">${Math.round((evaluation.lifeGuidanceResult || 0) * 1000) / 1000}</td>
+                    <td class="text-sm">${Math.round((evaluation.violencePreventionResult || 0) * 1000) / 1000}</td>
 
                     <!-- 전문성개발 -->
-                    <td class="text-sm">${(evaluation.professionalDevResult || 0).toFixed(1)}</td>
+                    <td class="text-sm">${Math.round((evaluation.professionalDevResult || 0) * 1000) / 1000}</td>
 
                     <!-- 담당업무 세부 점수 -->
-                    <td class="text-sm">${(evaluation.workPerformanceResult || 0).toFixed(1)}</td>
-                    <td class="text-sm">${(evaluation.subjectWorkResult || 0).toFixed(1)}</td>
-                    <td class="text-sm">${(evaluation.workDifficultyResult || 0).toFixed(1)}</td>
-                    <td class="text-sm">${(evaluation.committeeWorkResult || 0).toFixed(1)}</td>
+                    <td class="text-sm">${Math.round((evaluation.workPerformanceResult || 0) * 1000) / 1000}</td>
+                    <td class="text-sm">${Math.round((evaluation.subjectWorkResult || 0) * 1000) / 1000}</td>
+                    <td class="text-sm">${Math.round((evaluation.workDifficultyResult || 0) * 1000) / 1000}</td>
+                    <td class="text-sm">${Math.round((evaluation.committeeWorkResult || 0) * 1000) / 1000}</td>
 
                     <td class="text-xs leading-tight" style="font-size: 10px; line-height: 1.2;">
                         ${getCommitteeList(evaluation)}
@@ -774,6 +774,9 @@
                 alert('Firebase 연결이 필요합니다.');
                 return;
             }
+
+            console.log('스크린샷 조회 - evaluationId:', evaluationId);
+            console.log('스크린샷 조회 - teacherName:', teacherName);
 
             // 스크린샷 데이터 가져오기
             firebase.database().ref('screenshots').child(evaluationId).once('value')
@@ -979,17 +982,17 @@
                     evaluation.teacherType || '미설정',
                     evaluation.teacherSubject || '미입력',
                     evaluation.teacherDepartment || '미정',
-                    evaluation.totalScore.toFixed(1),
-                    (evaluation.learningResult || 0).toFixed(1),
-                    (evaluation.multiGradeResult || 0).toFixed(1),
-                    (evaluation.classOpenResult || 0).toFixed(1),
-                    (evaluation.lifeGuidanceResult || 0).toFixed(1),
-                    (evaluation.violencePreventionResult || 0).toFixed(1),
-                    (evaluation.professionalDevResult || 0).toFixed(1),
-                    (evaluation.workPerformanceResult || 0).toFixed(1),
-                    (evaluation.subjectWorkResult || 0).toFixed(1),
-                    (evaluation.workDifficultyResult || 0).toFixed(1),
-                    (evaluation.committeeWorkResult || 0).toFixed(1)
+                    Math.round(evaluation.totalScore * 1000) / 1000,
+                    Math.round((evaluation.learningResult || 0) * 1000) / 1000,
+                    Math.round((evaluation.multiGradeResult || 0) * 1000) / 1000,
+                    Math.round((evaluation.classOpenResult || 0) * 1000) / 1000,
+                    Math.round((evaluation.lifeGuidanceResult || 0) * 1000) / 1000,
+                    Math.round((evaluation.violencePreventionResult || 0) * 1000) / 1000,
+                    Math.round((evaluation.professionalDevResult || 0) * 1000) / 1000,
+                    Math.round((evaluation.workPerformanceResult || 0) * 1000) / 1000,
+                    Math.round((evaluation.subjectWorkResult || 0) * 1000) / 1000,
+                    Math.round((evaluation.workDifficultyResult || 0) * 1000) / 1000,
+                    Math.round((evaluation.committeeWorkResult || 0) * 1000) / 1000
                 ]);
             });
 
