@@ -889,6 +889,9 @@
             workPerformance: { absentMonths: 0, libraryGuide: false, differentSemesters: false, semester1: 0, semester2: 0 }
         };
 
+        // 복원 중 플래그
+        let isRestoring = false;
+
         // 시수에 따른 점수 계산 함수
         function getScoreFromHours(hours) {
             // 시수-점수 매핑 테이블 (현재 시수에 맞게 수정)
@@ -1555,10 +1558,10 @@
         }
 
         function resetForm() {
-            // 교사 정보 초기화
-            document.getElementById('teacherName').value = '';
-            document.getElementById('teacherSubject').value = '';
-            document.getElementById('teacherDepartment').value = '';
+            // 교사 정보는 localStorage에서 유지되므로 초기화하지 않음
+            // document.getElementById('teacherName').value = '';
+            // document.getElementById('teacherSubject').value = '';
+            // document.getElementById('teacherDepartment').value = '';
 
             // 체크박스 상태와 점수 조정사항은 localStorage에서 유지되므로 초기화하지 않음
             // localStorage.removeItem('teacherEvaluationCheckboxes');
@@ -2243,6 +2246,8 @@
 
         // 체크박스 상태 저장 함수
         function saveCheckboxState() {
+            if (isRestoring) return; // 복원 중에는 저장하지 않음
+
             const checkboxStates = {};
             document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
                 if (checkbox.id || (checkbox.dataset.group && (checkbox.dataset.hours || checkbox.dataset.type))) {
@@ -2251,6 +2256,18 @@
                 }
             });
             localStorage.setItem('teacherEvaluationCheckboxes', JSON.stringify(checkboxStates));
+        }
+
+        // 교사 정보 저장 함수
+        function saveTeacherInfo() {
+            if (isRestoring) return; // 복원 중에는 저장하지 않음
+
+            const teacherInfo = {
+                name: document.getElementById('teacherName').value,
+                subject: document.getElementById('teacherSubject').value,
+                department: document.getElementById('teacherDepartment').value
+            };
+            localStorage.setItem('teacherEvaluationInfo', JSON.stringify(teacherInfo));
         }
 
         // 점수 조정사항 저장 함수
@@ -2280,7 +2297,9 @@
                 }
             });
 
+            console.log('저장할 점수 조정사항:', adjustments);
             localStorage.setItem('teacherEvaluationScoreAdjustments', JSON.stringify(adjustments));
+            console.log('점수 조정사항 저장 완료');
         }
 
         // 체크박스 배경색 토글 함수
@@ -2343,6 +2362,7 @@
             const savedStates = localStorage.getItem('teacherEvaluationCheckboxes');
             if (savedStates) {
                 try {
+                    isRestoring = true; // 복원 시작
                     const checkboxStates = JSON.parse(savedStates);
                     document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
                         const key = checkbox.id || `${checkbox.dataset.group}-${checkbox.dataset.hours || checkbox.dataset.type}`;
@@ -2352,10 +2372,22 @@
                             toggleCheckboxBackground(checkbox);
                         }
                     });
-                    // 점수 업데이트
-                    updateAllScores();
+                    // 체크박스 기반 점수만 계산 (조정된 점수는 나중에 복원)
+                    updateLearningScore();
+                    updateMultiGradeScore();
+                    updateClassOpenScore();
+                    updateHomeworkScore();
+                    updateSafetyScore();
+                    updateProfessionalDevScore();
+                    updateWorkPerformanceScore();
+                    updateDepartmentalWorkScore();
+                    updateWorkDifficultyScore();
+                    updateEducationActivityScore();
+                    updateCommitteeActivityScore();
+                    isRestoring = false; // 복원 완료
                 } catch (error) {
                     console.error('체크박스 상태 복원 오류:', error);
+                    isRestoring = false; // 오류 시에도 플래그 해제
                 }
             }
         }
@@ -2363,20 +2395,30 @@
         // 점수 조정사항 복원 함수
         function restoreScoreAdjustments() {
             const savedAdjustments = localStorage.getItem('teacherEvaluationScoreAdjustments');
+            console.log('복원할 점수 조정사항:', savedAdjustments);
+
             if (savedAdjustments) {
                 try {
                     const adjustments = JSON.parse(savedAdjustments);
+                    console.log('파싱된 조정사항:', adjustments);
 
                     // adjustmentHistory 복원
                     if (adjustments.adjustmentHistory) {
                         Object.assign(adjustmentHistory, adjustments.adjustmentHistory);
+                        console.log('adjustmentHistory 복원 완료:', adjustmentHistory);
+
+                        // 복원된 설정에 따라 점수 자동 재계산 및 적용
+                        applyRestoredAdjustments();
                     }
 
                     // 수동으로 조정된 점수들 복원
                     if (adjustments.manualScores) {
+                        console.log('복원할 수동 점수들:', adjustments.manualScores);
                         Object.keys(adjustments.manualScores).forEach(elementId => {
                             const element = document.getElementById(elementId);
                             const adjustmentInfo = document.getElementById(elementId.replace('Result', 'AdjustmentInfo'));
+
+                            console.log(`복원 시도 - ${elementId}:`, element, adjustmentInfo);
 
                             if (element && adjustmentInfo) {
                                 const savedData = adjustments.manualScores[elementId];
@@ -2386,13 +2428,194 @@
 
                                 adjustmentInfo.innerHTML = savedData.adjustmentInfo;
                                 adjustmentInfo.style.display = 'block';
+
+                                console.log(`${elementId} 복원 완료 - 점수: ${savedData.score}`);
                             }
                         });
+
+                        // 조정된 점수 복원 후 모든 총점 재계산
+                        console.log('총점 재계산 시작');
+                        updateLearningTotalScore();
+                        updateLifeGuidanceTotalScore();
+                        updateProfessionalDevelopmentTotalScore();
+                        updateAssignedWorkTotalScore();
+                        updateGrandTotal();
+                        console.log('총점 재계산 완료');
                     }
                 } catch (error) {
                     console.error('점수 조정사항 복원 오류:', error);
                 }
+            } else {
+                console.log('저장된 점수 조정사항이 없습니다.');
             }
+        }
+
+        // 교사 정보 복원 함수
+        function restoreTeacherInfo() {
+            const savedInfo = localStorage.getItem('teacherEvaluationInfo');
+            if (savedInfo) {
+                try {
+                    const teacherInfo = JSON.parse(savedInfo);
+                    console.log('교사 정보 복원:', teacherInfo);
+
+                    isRestoring = true; // 복원 중 플래그 설정
+
+                    // 교사 정보 복원
+                    if (teacherInfo.name) {
+                        document.getElementById('teacherName').value = teacherInfo.name;
+                    }
+                    if (teacherInfo.subject) {
+                        document.getElementById('teacherSubject').value = teacherInfo.subject;
+                    }
+                    if (teacherInfo.department) {
+                        document.getElementById('teacherDepartment').value = teacherInfo.department;
+                    }
+
+                    isRestoring = false; // 복원 완료
+                    console.log('교사 정보 복원 완료');
+                } catch (error) {
+                    console.error('교사 정보 복원 오류:', error);
+                    isRestoring = false;
+                }
+            }
+        }
+
+        // 복원된 조정사항에 따라 점수 자동 적용
+        function applyRestoredAdjustments() {
+            console.log('복원된 조정사항 자동 적용 시작');
+
+            // 각 항목별로 조정사항이 있으면 자동으로 적용
+            Object.keys(adjustmentHistory).forEach(scoreType => {
+                const adjustment = adjustmentHistory[scoreType];
+
+                // 조정사항이 있는지 확인 (미근무월수, 도서관지도, 학기별시수 등)
+                const hasAdjustment = adjustment.absentMonths > 0 ||
+                                    adjustment.libraryGuide ||
+                                    adjustment.differentSemesters ||
+                                    adjustment.semester1 > 0 ||
+                                    adjustment.semester2 > 0;
+
+                if (hasAdjustment) {
+                    console.log(`${scoreType} 조정사항 자동 적용:`, adjustment);
+
+                    // 해당 항목의 기본 점수 가져오기
+                    let baseScore = 0;
+                    let resultElementId = '';
+
+                    switch(scoreType) {
+                        case 'learning':
+                            baseScore = getCurrentLearningScore();
+                            resultElementId = 'learningResult';
+                            break;
+                        case 'lifeGuidance':
+                            baseScore = getCurrentLifeGuidanceScore();
+                            resultElementId = 'lifeGuidanceResult';
+                            break;
+                        case 'violencePrevention':
+                            baseScore = getCurrentViolencePreventionScore();
+                            resultElementId = 'violencePreventionResult';
+                            break;
+                        case 'workPerformance':
+                            baseScore = getCurrentWorkPerformanceScore();
+                            resultElementId = 'workPerformanceResult';
+                            break;
+                    }
+
+                    if (baseScore > 0 && resultElementId) {
+                        // 조정사항 적용하여 최종 점수 계산
+                        let finalScore = baseScore;
+
+                        // 미근무월수 감점
+                        if (adjustment.absentMonths > 0) {
+                            finalScore -= adjustment.absentMonths * 0.1;
+                        }
+
+                        // 도서관지도 가점
+                        if (adjustment.libraryGuide) {
+                            finalScore += 0.2;
+                        }
+
+                        // 학기별 시수 조정 (수업시수의 경우)
+                        if (scoreType === 'learning' && adjustment.differentSemesters) {
+                            const totalHours = parseFloat(adjustment.semester1) + parseFloat(adjustment.semester2);
+                            finalScore = getScoreFromHours(totalHours);
+
+                            // 미근무월수 재적용
+                            if (adjustment.absentMonths > 0) {
+                                finalScore -= adjustment.absentMonths * 0.1;
+                            }
+                        }
+
+                        // 점수 적용
+                        const resultElement = document.getElementById(resultElementId);
+                        const adjustmentInfo = document.getElementById(resultElementId.replace('Result', 'AdjustmentInfo'));
+
+                        if (resultElement && adjustmentInfo) {
+                            resultElement.textContent = finalScore.toFixed(1);
+                            resultElement.style.color = 'red';
+                            resultElement.closest('td').style.backgroundColor = '#fef2f2';
+
+                            // 조정 내역 표시
+                            let adjustmentText = [];
+                            if (scoreType === 'learning' && adjustment.differentSemesters) {
+                                adjustmentText.push('시수다름');
+                            }
+                            if (adjustment.absentMonths > 0) {
+                                adjustmentText.push(`미근무${adjustment.absentMonths}월`);
+                            }
+                            if (adjustment.libraryGuide) {
+                                adjustmentText.push('도서관');
+                            }
+
+                            adjustmentInfo.innerHTML = adjustmentText.join(', ');
+                            adjustmentInfo.style.display = 'block';
+
+                            console.log(`${scoreType} 점수 자동 적용: ${baseScore} → ${finalScore.toFixed(1)}`);
+                        }
+                    }
+                }
+            });
+
+            console.log('복원된 조정사항 자동 적용 완료');
+        }
+
+        // 현재 기본 점수 가져오기 함수들
+        function getCurrentLearningScore() {
+            const checkboxes = document.querySelectorAll('input[data-group="1"]:checked');
+            if (checkboxes.length === 1) {
+                return parseFloat(checkboxes[0].dataset.hours);
+            }
+            return 0;
+        }
+
+        function getCurrentLifeGuidanceScore() {
+            const checkboxes = document.querySelectorAll('input[data-group="4"]:checked');
+            if (checkboxes.length === 1 && checkboxes[0].dataset.type === 'applicable') {
+                return 10;
+            }
+            return 0;
+        }
+
+        function getCurrentViolencePreventionScore() {
+            const checkboxes = document.querySelectorAll('input[data-group="5"]:checked');
+            if (checkboxes.length === 1) {
+                const selectedType = checkboxes[0].dataset.type;
+                switch(selectedType) {
+                    case 'department_head': return 10;
+                    case 'homeroom_violence': return 10;
+                    case 'over_50': return 10;
+                    case 'under_50': return 5;
+                }
+            }
+            return 0;
+        }
+
+        function getCurrentWorkPerformanceScore() {
+            const checkboxes = document.querySelectorAll('input[data-group="7"]:checked');
+            if (checkboxes.length === 1 && checkboxes[0].dataset.type === 'department_head') {
+                return 10;
+            }
+            return 0;
         }
 
         // 모든 점수 업데이트 함수
@@ -2413,6 +2636,8 @@
 
         // 초기화
         document.addEventListener('DOMContentLoaded', () => {
+            // 저장된 교사 정보 복원
+            restoreTeacherInfo();
             // 저장된 체크박스 상태 복원
             restoreCheckboxState();
             // 저장된 점수 조정사항 복원
@@ -2523,6 +2748,18 @@
 
             // 초기 제출 버튼 상태 설정 (처음에는 비활성화)
             updateSubmitButtonState(true);
+
+            // 교사 정보 입력 시 자동 저장
+            const teacherNameInput = document.getElementById('teacherName');
+            const teacherSubjectInput = document.getElementById('teacherSubject');
+            const teacherDepartmentSelect = document.getElementById('teacherDepartment');
+
+            [teacherNameInput, teacherSubjectInput, teacherDepartmentSelect].forEach(input => {
+                if (input) {
+                    input.addEventListener('input', saveTeacherInfo);
+                    input.addEventListener('change', saveTeacherInfo);
+                }
+            });
         });
 
         // 스크린샷 캡처 함수
