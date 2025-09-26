@@ -266,7 +266,7 @@
                         ⚙️ Firebase 설정
                     </button>
                     <button class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700" onclick="captureScreenshot()">
-                        📸 스크린샷 저장
+                        📸 스크린샷 저장 (선택사항)
                     </button>
                     <button id="submitBtn" class="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700" onclick="submitEvaluation()">
                         📤 평가 제출하기
@@ -1472,11 +1472,13 @@
             if (window.evaluationRef) {
                 // 고유 키 생성
                 const uniqueKey = generateUniqueKey(teacherName, teacherSubject);
+                console.log('생성된 고유 키:', uniqueKey);
+                console.log('저장할 데이터:', submissionData);
 
                 // child(key).set()을 사용하여 덮어쓰기
                 evaluationRef.child(uniqueKey).set(submissionData)
                     .then(() => {
-                        alert('평가가 성공적으로 제출되었습니다!\n(기존 데이터가 있었다면 업데이트되었습니다.)');
+                        alert(`평가가 성공적으로 제출되었습니다!\n키: ${uniqueKey}\n(기존 데이터가 있었다면 업데이트되었습니다.)`);
                         resetForm();
                     })
                     .catch((error) => {
