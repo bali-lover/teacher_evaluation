@@ -1365,6 +1365,14 @@
 
 
 
+        // 고유 키 생성 함수
+        function generateUniqueKey(teacherName, teacherSubject) {
+            // 공백, 특수문자 제거하고 안전한 키 생성
+            const cleanName = teacherName.replace(/[^가-힣a-zA-Z0-9]/g, '');
+            const cleanSubject = teacherSubject.replace(/[^가-힣a-zA-Z0-9]/g, '');
+            return `${cleanName}_${cleanSubject}`;
+        }
+
         function submitEvaluation() {
             // 교사 정보 확인
             const teacherName = document.getElementById('teacherName').value.trim();
@@ -1460,11 +1468,15 @@
                 submittedAt: new Date().toISOString()
             };
 
-            // Firebase에 저장
+            // Firebase에 저장 (덮어쓰기 방식)
             if (window.evaluationRef) {
-                evaluationRef.push(submissionData)
+                // 고유 키 생성
+                const uniqueKey = generateUniqueKey(teacherName, teacherSubject);
+
+                // child(key).set()을 사용하여 덮어쓰기
+                evaluationRef.child(uniqueKey).set(submissionData)
                     .then(() => {
-                        alert('평가가 성공적으로 제출되었습니다!');
+                        alert('평가가 성공적으로 제출되었습니다!\n(기존 데이터가 있었다면 업데이트되었습니다.)');
                         resetForm();
                     })
                     .catch((error) => {
@@ -1482,15 +1494,8 @@
             document.getElementById('teacherSubject').value = '';
             document.getElementById('teacherDepartment').value = '';
 
-            // 모든 체크박스 초기화
-            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-                checkbox.checked = false;
-            });
-
-            // 배경색 초기화
-            document.querySelectorAll('.bg-yellow-200').forEach(element => {
-                element.classList.remove('bg-yellow-200', 'rounded', 'px-1');
-            });
+            // 체크박스 상태는 localStorage에서 유지되므로 초기화하지 않음
+            // localStorage.removeItem('teacherEvaluationCheckboxes'); // 이 줄을 주석 처리
 
             // 점수 초기화
             updateLearningScore();
@@ -2169,6 +2174,18 @@
             }
         }
 
+        // 체크박스 상태 저장 함수
+        function saveCheckboxState() {
+            const checkboxStates = {};
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                if (checkbox.id || (checkbox.dataset.group && (checkbox.dataset.hours || checkbox.dataset.type))) {
+                    const key = checkbox.id || `${checkbox.dataset.group}-${checkbox.dataset.hours || checkbox.dataset.type}`;
+                    checkboxStates[key] = checkbox.checked;
+                }
+            });
+            localStorage.setItem('teacherEvaluationCheckboxes', JSON.stringify(checkboxStates));
+        }
+
         // 체크박스 배경색 토글 함수
         function toggleCheckboxBackground(checkbox) {
             // 교육활동활성화 섹션 (label 구조)인지 확인
@@ -2211,6 +2228,8 @@
                     }
                 }
             }
+            // 체크박스 상태 변경 시 저장
+            saveCheckboxState();
         }
 
         // 모든 체크박스에 배경색 토글 이벤트 추가
@@ -2222,8 +2241,48 @@
             });
         }
 
+        // 체크박스 상태 복원 함수
+        function restoreCheckboxState() {
+            const savedStates = localStorage.getItem('teacherEvaluationCheckboxes');
+            if (savedStates) {
+                try {
+                    const checkboxStates = JSON.parse(savedStates);
+                    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                        const key = checkbox.id || `${checkbox.dataset.group}-${checkbox.dataset.hours || checkbox.dataset.type}`;
+                        if (checkboxStates.hasOwnProperty(key)) {
+                            checkbox.checked = checkboxStates[key];
+                            // 배경색도 복원
+                            toggleCheckboxBackground(checkbox);
+                        }
+                    });
+                    // 점수 업데이트
+                    updateAllScores();
+                } catch (error) {
+                    console.error('체크박스 상태 복원 오류:', error);
+                }
+            }
+        }
+
+        // 모든 점수 업데이트 함수
+        function updateAllScores() {
+            updateLearningScore();
+            updateMultiGradeScore();
+            updateClassOpenScore();
+            updateHomeworkScore();
+            updateSafetyScore();
+            updateProfessionalDevScore();
+            updateWorkPerformanceScore();
+            updateDepartmentalWorkScore();
+            updateWorkDifficultyScore();
+            updateEducationActivityScore();
+            updateCommitteeActivityScore();
+            updateLearningTotalScore();
+        }
+
         // 초기화
         document.addEventListener('DOMContentLoaded', () => {
+            // 저장된 체크박스 상태 복원
+            restoreCheckboxState();
             // 수업시수 체크박스 이벤트 리스너 추가
             document.querySelectorAll('input[data-group="1"]').forEach(checkbox => {
                 checkbox.addEventListener('change', () => {
@@ -2334,6 +2393,17 @@
 
         // 스크린샷 캡처 함수
         function captureScreenshot() {
+            // 교사 정보 확인
+            const teacherName = document.getElementById('teacherName').value.trim();
+            const teacherSubject = document.getElementById('teacherSubject').value.trim();
+            const departmentSelect = document.getElementById('teacherDepartment');
+            const department = departmentSelect.value ? departmentSelect.selectedOptions[0].text : '부서';
+
+            if (!teacherName || !teacherSubject) {
+                alert('스크린샷 저장을 위해 성명과 발령교과를 입력해주세요.');
+                return;
+            }
+
             // 버튼들을 임시로 숨기기
             const buttons = document.querySelectorAll('button');
             buttons.forEach(btn => {
@@ -2346,15 +2416,9 @@
                 modal.style.display = 'none';
             });
 
-
-            // 교사 정보 가져오기
-            const teacherName = document.getElementById('teacherName').value || '이름';
-            const departmentSelect = document.getElementById('teacherDepartment');
-            const department = departmentSelect.value ? departmentSelect.selectedOptions[0].text : '부서';
-
             // html2canvas로 스크린샷 캡처
             html2canvas(document.body, {
-                scale: 2, // 고화질을 위한 스케일 설정
+                scale: 1.5, // 용량과 품질의 균형
                 useCORS: true,
                 allowTaint: true,
                 backgroundColor: '#f8fafc',
@@ -2366,11 +2430,36 @@
                     btn.style.visibility = 'visible';
                 });
 
-                // 캔버스를 이미지로 변환하여 다운로드
+                // 이미지를 base64로 변환 (압축)
+                const imageData = canvas.toDataURL('image/jpeg', 0.8); // JPEG 80% 품질로 압축
+
+                // 로컬 다운로드
                 const link = document.createElement('a');
-                link.download = `2025 다면평가_${department}_${teacherName}.png`;
-                link.href = canvas.toDataURL('image/png');
+                link.download = `2025 다면평가_${department}_${teacherName}.jpg`;
+                link.href = imageData;
                 link.click();
+
+                // Firebase에 저장
+                if (window.evaluationRef) {
+                    const uniqueKey = generateUniqueKey(teacherName, teacherSubject);
+                    const screenshotRef = firebase.database().ref('screenshots').child(uniqueKey);
+
+                    screenshotRef.set({
+                        teacherName: teacherName,
+                        teacherSubject: teacherSubject,
+                        department: department,
+                        imageData: imageData,
+                        capturedAt: new Date().toISOString()
+                    }).then(() => {
+                        console.log('스크린샷이 Firebase에 저장되었습니다.');
+                        alert('스크린샷을 다운로드하고 서버에 저장했습니다!');
+                    }).catch((error) => {
+                        console.error('스크린샷 저장 오류:', error);
+                        alert('스크린샷은 다운로드되었지만, 서버 저장 중 오류가 발생했습니다.');
+                    });
+                } else {
+                    alert('스크린샷을 다운로드했습니다. (서버 저장을 위해 Firebase 연결이 필요합니다.)');
+                }
             }).catch(error => {
                 // 에러 발생 시 버튼들 복구
                 buttons.forEach(btn => {
