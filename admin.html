@@ -782,7 +782,7 @@
                     if (screenshotData && screenshotData.imageData) {
                         showScreenshotModal(screenshotData, teacherName);
                     } else {
-                        alert(`${teacherName} 교사의 스크린샷이 없습니다.`);
+                        showNoScreenshotModal(teacherName);
                     }
                 })
                 .catch((error) => {
@@ -841,6 +841,44 @@
             if (modal) {
                 modal.remove();
             }
+        }
+
+        // 스크린샷 없음 모달
+        function showNoScreenshotModal(teacherName) {
+            // 기존 모달 제거
+            const existingModal = document.getElementById('screenshotModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            // 새 모달 생성
+            const modal = document.createElement('div');
+            modal.id = 'screenshotModal';
+            modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg p-6 max-w-md">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold">${teacherName} 교사 - 스크린샷</h3>
+                        <button onclick="closeScreenshotModal()" class="text-gray-500 hover:text-gray-700">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="text-center py-8">
+                        <div class="text-6xl text-gray-400 mb-4">📷</div>
+                        <p class="text-gray-600 mb-2">스크린샷이 없습니다.</p>
+                        <p class="text-sm text-gray-500">교사가 스크린샷을 촬영하지 않았거나<br>아직 업로드되지 않았습니다.</p>
+                    </div>
+                    <div class="text-center">
+                        <button onclick="closeScreenshotModal()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+                            닫기
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
         }
 
         // 스크린샷 다운로드
