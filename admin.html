@@ -615,22 +615,25 @@
                     <td><span class="score-badge">${Math.round(evaluation.totalScore * 1000) / 1000}</span></td>
 
                     <!-- 학습지도 세부 점수 -->
-                    <td class="text-sm">${Math.round((evaluation.learningResult || 0) * 1000) / 1000}</td>
-                    <td class="text-sm">${Math.round((evaluation.multiGradeResult || 0) * 1000) / 1000}</td>
-                    <td class="text-sm">${Math.round((evaluation.classOpenResult || 0) * 1000) / 1000}</td>
+                    <td class="text-sm bg-blue-50">${Math.round((evaluation.learningResult || 0) * 1000) / 1000}</td>
+                    <td class="text-sm bg-blue-50">${Math.round((evaluation.multiGradeResult || 0) * 1000) / 1000}</td>
+                    <td class="text-sm bg-blue-50">${Math.round((evaluation.classOpenResult || 0) * 1000) / 1000}</td>
+                    <td class="text-sm bg-blue-200 font-bold">${Math.round((evaluation.learningTotalResult || 0) * 1000) / 1000}</td>
 
                     <!-- 생활지도 세부 점수 -->
-                    <td class="text-sm">${Math.round((evaluation.lifeGuidanceResult || 0) * 1000) / 1000}</td>
-                    <td class="text-sm">${Math.round((evaluation.violencePreventionResult || 0) * 1000) / 1000}</td>
+                    <td class="text-sm bg-orange-50">${Math.round((evaluation.lifeGuidanceResult || 0) * 1000) / 1000}</td>
+                    <td class="text-sm bg-orange-50">${Math.round((evaluation.violencePreventionResult || 0) * 1000) / 1000}</td>
+                    <td class="text-sm bg-orange-200 font-bold">${Math.round((evaluation.lifeGuidanceTotalResult || 0) * 1000) / 1000}</td>
 
                     <!-- 전문성개발 -->
-                    <td class="text-sm">${Math.round((evaluation.professionalDevResult || 0) * 1000) / 1000}</td>
+                    <td class="text-sm bg-teal-50">${Math.round((evaluation.professionalDevResult || 0) * 1000) / 1000}</td>
 
                     <!-- 담당업무 세부 점수 -->
-                    <td class="text-sm">${Math.round((evaluation.workPerformanceResult || 0) * 1000) / 1000}</td>
-                    <td class="text-sm">${Math.round((evaluation.subjectWorkResult || 0) * 1000) / 1000}</td>
-                    <td class="text-sm">${Math.round((evaluation.workDifficultyResult || 0) * 1000) / 1000}</td>
-                    <td class="text-sm">${Math.round((evaluation.committeeWorkResult || 0) * 1000) / 1000}</td>
+                    <td class="text-sm bg-purple-50">${Math.round((evaluation.workPerformanceResult || 0) * 1000) / 1000}</td>
+                    <td class="text-sm bg-purple-50">${Math.round((evaluation.subjectWorkResult || 0) * 1000) / 1000}</td>
+                    <td class="text-sm bg-purple-50">${Math.round((evaluation.workDifficultyResult || 0) * 1000) / 1000}</td>
+                    <td class="text-sm bg-purple-50">${Math.round((evaluation.committeeWorkResult || 0) * 1000) / 1000}</td>
+                    <td class="text-sm bg-purple-200 font-bold">${Math.round((evaluation.assignedWorkTotalResult || 0) * 1000) / 1000}</td>
 
                     <td class="text-xs leading-tight" style="font-size: 10px; line-height: 1.2;">
                         ${getCommitteeList(evaluation)}
